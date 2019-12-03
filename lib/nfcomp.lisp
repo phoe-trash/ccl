@@ -280,12 +280,10 @@ Will differ from *compiling-file* during an INCLUDE")
         (fasl-dump-file gnames goffsets forms hash output-file))
       (fasl-unlock-hash-tables))))
 
-#-bccl
 (defun nfcomp (src &optional dest &rest keys)
   (when (keywordp dest) (setq keys (cons dest keys) dest nil))
   (apply #'compile-file src :output-file dest keys))
 
-#-bccl
 (%fhave 'fcomp #'nfcomp)
 
 (defparameter *default-file-compilation-policy* (new-compiler-policy))
@@ -1222,15 +1220,15 @@ Will differ from *compiling-file* during an INCLUDE")
         (setq *fasdump-read-package* op)
         (dolist (arg (cdr op)) (fasl-scan-form arg))))
 
-    #-bccl (when (eq *compile-verbose* :debug)
-             (format t "~&~S forms, ~S entries -> "
-                     (length forms)
-                     (hash-table-count *fasdump-hash*)))
+    (when (eq *compile-verbose* :debug)
+      (format t "~&~S forms, ~S entries -> "
+              (length forms)
+              (hash-table-count *fasdump-hash*)))
     (maphash #'(lambda (key val)
                  (when (%izerop val) (remhash key *fasdump-hash*)))
              *fasdump-hash*)
-    #-bccl (when (eq *compile-verbose* :debug)
-             (format t "~S." (hash-table-count *fasdump-hash*)))
+    (when (eq *compile-verbose* :debug)
+      (format t "~S." (hash-table-count *fasdump-hash*)))
     (values *fasdump-hash*
             gsymbols
             *fasdump-global-offsets*)))
@@ -1591,8 +1589,8 @@ Will differ from *compiling-file* during an INCLUDE")
     (fasl-out-byte opcode)))
 
 (defun fasl-dump-epush (form)
-  #-bccl (when (fixnump (gethash form *fasdump-hash*))
-           (error "Bug! Duplicate epush for ~S" form))
+  (when (fixnump (gethash form *fasdump-hash*))
+    (error "Bug! Duplicate epush for ~S" form))
   (puthash form *fasdump-hash* (setq *fasdump-eref* (1+ *fasdump-eref*))))
 
 
@@ -2086,8 +2084,8 @@ Will differ from *compiling-file* during an INCLUDE")
 
 (defun fasl-set-filepos (pos)
   (file-position *fasdump-stream* pos)
-  #-bccl (unless (eq (file-position *fasdump-stream*) pos)
-           (error "Unable to set file position to ~S" pos)))
+  (unless (eq (file-position *fasdump-stream*) pos)
+    (error "Unable to set file position to ~S" pos)))
 
 ;;; Concatenate fasl files.
 

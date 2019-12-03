@@ -22,7 +22,7 @@
 
 (in-package "CCL")
 
-(eval-when (eval compile #-bccl load)  ;Load-time as well so CCL can use it.
+(eval-when (eval compile load)  ;Load-time as well so CCL can use it.
   (defmacro defformat (char name &rest def)
     `(progn
        (add-format-char ,char (nfunction ,name (lambda . ,def)))

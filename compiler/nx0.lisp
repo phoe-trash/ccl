@@ -114,8 +114,8 @@
   '(error cerror break warn type-error file-error
     signal-program-error signal-simple-program-error
     print-call-history
-    #-bccl %get-frame-pointer
-    #-bccl break-loop)
+    %get-frame-pointer
+    break-loop)
   "List of functions which never return multiple values and
    should never be tail-called.")
 

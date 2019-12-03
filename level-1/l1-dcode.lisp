@@ -179,8 +179,8 @@
 ;;; combined methods from the dispatch table.
 
 (defun clear-gf-cache (gf)
-  #-bccl (unless t (typep gf 'standard-generic-function) 
-                 (report-bad-arg gf 'standard-generic-function))
+  (unless t (typep gf 'standard-generic-function)
+          (report-bad-arg gf 'standard-generic-function))
   (let ((dt (%gf-dispatch-table gf)))
     (unless (< (%gf-dispatch-table-argnum dt) 0) ;reader-method optimization
       (if (eq (%gf-dispatch-table-size dt) *min-gf-dispatch-table-size*)

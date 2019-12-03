@@ -226,8 +226,7 @@
      ((and (consp source)(consp from)) ; source and from both logical 
       (setq source (cadr source) from (cadr from)))
      ((or (consp source)(consp from)) ;  or neither
-      #-bccl (error "Something non-kosher in translate pathname")
-      ))
+      (error "Something non-kosher in translate pathname")))
     (when (memq from '(:wild :wild-inferiors)) (setq from "*"))
     (when (memq source '(:wild :wild-inferiors))(setq source "*"))
     (when (memq to '(:wild :wild-inferiors))(setq to "*"))

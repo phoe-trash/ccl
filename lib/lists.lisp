@@ -222,7 +222,7 @@
 ;;; Use this with the following keyword args:
 ;;;  (&key (key #'identity) (test #'eql testp) (test-not nil notp))
 
-(eval-when (eval compile #-bccl load)
+(eval-when (eval compile load)
  (defmacro with-set-keys (funcall)
    `(cond (notp ,(append funcall '(:key key :test-not test-not)))
           (t ,(append funcall '(:key key :test test)))))
@@ -458,7 +458,7 @@
 
 
 
-(eval-when (eval compile #-bccl load)
+(eval-when (eval compile load)
 ;;; Destination and source are setf-able and many-evaluable.
 ;;; Sets the source to the cdr, and "conses" the 1st elt of 
 ;;; source to destination.
