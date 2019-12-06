@@ -2261,25 +2261,6 @@ has immediate effect."
   `(let* ((*interrupt-level* 0))
     ,@body))
 
-;init-list-default: if there is no init pair for <keyword>,
-;    add a <keyword> <value> pair to init-list
-(defmacro init-list-default (the-init-list &rest args)
-  (let ((result)
-       (init-list-sym (gensym)))
-   (do ((args args (cddr args)))
-       ((not args))
-     (setq result 
-           (cons `(if (eq '%novalue (getf ,init-list-sym ,(car args) 
-                                          '%novalue))
-                    (setq ,init-list-sym (cons ,(car args) 
-                                               (cons ,(cadr args) 
-                                                     ,init-list-sym))))
-                 result)))                                                                                
-   `(let ((,init-list-sym ,the-init-list))
-      (progn ,@result)
-      ,init-list-sym)
-   ))
-
 (defmacro in-package (name)
   `(eval-when (:execute :load-toplevel :compile-toplevel)
      (set-package ,(string name))))

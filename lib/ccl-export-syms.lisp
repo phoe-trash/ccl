@@ -310,7 +310,6 @@
      *long-site-name*
      machine-owner
 
-     init-list-default
      fset
 
      ;; Files.
