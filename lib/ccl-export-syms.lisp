@@ -308,7 +308,6 @@
      ;; functions to return something other than "unspecified".
      *short-site-name*
      *long-site-name*
-     machine-owner
 
      fset
 
