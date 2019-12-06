@@ -220,10 +220,6 @@
                     (lets (list name `(%inc-ptr ,stack-ptr ,offset)))))))
               (let* ((pair (list name (next-scalar-arg argtype))))
                 (when name (lets pair))))
-            #+nil
-            (when (or (typep argtype 'foreign-pointer-type)
-                      (typep argtype 'foreign-array-type))
-              (dynamic-extent-names name))
             (when use-fp-args (set-fp-regs-form)))))))))
 
 (defun darwin32::generate-callback-return-value (stack-ptr fp-args-ptr result return-type struct-return-arg)

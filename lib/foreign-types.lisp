@@ -540,8 +540,6 @@ list, NIL otherwise."
   (declare (ignore docs))
   (setf (info-foreign-type-translator name) translator)
   (clear-info-foreign-type-definition name)
-  #+nil
-  (setf (documentation name 'foreign-type) docs)
   name)
 
 

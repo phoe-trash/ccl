@@ -4942,8 +4942,6 @@ v idx-reg constidx val-reg (arm2-unboxed-reg-for-aset seg type-keyword val-reg s
     (eq op (%nx1-operator simple-function))
     (eq op (%nx1-operator fixnum))
     (eq op (%nx1-operator immediate))
-    #+nil
-    (eq op (%nx1-operator bound-special-ref))
     (and (or (eq op (%nx1-operator inherited-arg)) 
              (eq op (%nx1-operator lexical-reference)))
          (or (%ilogbitp $vbitpunted (setq bits (nx-var-bits (car (acode-operands form)))))
@@ -6710,24 +6708,12 @@ v idx-reg constidx val-reg (arm2-unboxed-reg-for-aset seg type-keyword val-reg s
          (idx-subprim (arm2-builtin-index-subprim idx))
          (subprim
           (or idx-subprim
-              (compiler-bug "Isn't this code long since unused ?")
-              #+nil
-              (case nargs
-                (0 (arm::arm-subprimitive-offset '.SPcallbuiltin0))
-                (1 (arm::arm-subprimitive-offset '.SPcallbuiltin1))
-                (2 (arm::arm-subprimitive-offset '.SPcallbuiltin2))
-                (3 (arm::arm-subprimitive-offset '.SPcallbuiltin3))
-                (t (arm::arm-subprimitive-offset '.SPcallbuiltin))))))
+              (compiler-bug "Isn't this code long since unused ?"))))
     (when tail-p
       (arm2-restore-nvrs seg nil)
       (arm2-restore-non-volatile-fprs seg)
       (! restore-nfp)
       (arm2-restore-full-lisp-context seg))
-    #+nil
-    (unless idx-subprim
-      (! lri arm::imm0 (ash idx *arm2-target-fixnum-shift*))
-      (when (eql subprim (arm::arm-subprimitive-offset '.SPcallbuiltin))
-        (arm2-set-nargs seg nargs)))
     (if tail-p
       (! jump-subprim subprim)
       (progn

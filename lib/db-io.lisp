@@ -449,7 +449,7 @@
                            (<=  version *interface-abi-version*))
                     cdb
                     (error-with-cdb "Wrong interface ABI version. Expected ~d, got ~d" *interface-abi-version* version))
-                  cdb #+nil(error-with-cdb "Wrong target."))
+                  cdb)
                 (error-with-cdb "Missing interface file signature.  Obsolete version?")))))))))
 
                   

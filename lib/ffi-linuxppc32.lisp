@@ -187,9 +187,6 @@
                           ,stack-ptr
                           ,(+ target bias))))
                   (when name (lets (list name access-form)))
-                  #+nil
-                  (when (eq spec :address)
-                    (dynamic-extent-names name))
                   (setq gpr nextgpr fpr nextfpr offset nextoffset))))))))
 
 (defun linux32::generate-callback-return-value (stack-ptr fp-args-ptr result return-type struct-return-arg)

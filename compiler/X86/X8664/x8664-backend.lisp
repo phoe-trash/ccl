@@ -616,10 +616,7 @@
                               (:unsigned-fullword '%get-unsigned-long)
                               (:unsigned-halfword '%get-unsigned-word)
                               (:unsigned-byte '%get-unsigned-byte)
-                              (:address
-                               #+nil
-                               (when name (dynamic-extent-names name))
-                               '%get-ptr))
+                              (:address '%get-ptr))
                             ,stack-ptr
                             ,(if fp (next-fpr) (next-gpr)))))                
                 (if name (lets (list name form )))))))))))

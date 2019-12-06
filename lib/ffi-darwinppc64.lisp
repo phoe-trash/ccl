@@ -510,10 +510,6 @@
                 (let* ((form (next-scalar-arg argtype)))
                   (when name 
                     (lets (list name form)))))
-              #+nil
-              (when (or (typep argtype 'foreign-pointer-type)
-                        (typep argtype 'foreign-array-type))
-                (dynamic-extent-names name))
               (when use-fp-args (set-fp-regs-form)))))))))
 
 (defun darwin64::generate-callback-return-value (stack-ptr fp-args-ptr result return-type struct-return-arg)

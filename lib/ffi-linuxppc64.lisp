@@ -169,9 +169,6 @@
                         ,(if use-fp-args (* 8 (1- fp-arg-num))
                              `(+ ,offset ,bias)))))
                 (when name (lets (list name access-form)))
-                #+nil
-                (when (eq spec :address)
-                  (dynamic-extent-names name))
                 (when use-fp-args (set-fp-regs-form))))))))))
 
 

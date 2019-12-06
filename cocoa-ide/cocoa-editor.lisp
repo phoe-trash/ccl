@@ -118,73 +118,33 @@
 			   #&NSObliquenessAttributeName))
     dict))
 
-(defun rme-make-editor-style-map ()
+(defun make-editor-style-map ()
   (let* ((font *editor-font*)
-	 (fm (#/sharedFontManager ns:ns-font-manager))
-	 (bold-font (#/convertFont:toHaveTrait: fm font #$NSBoldFontMask))
-	 (oblique-font (#/convertFont:toHaveTrait: fm font #$NSItalicFontMask))
-	 (bold-oblique-font (#/convertFont:toHaveTrait:
-			     fm font (logior #$NSItalicFontMask
-					     #$NSBoldFontMask)))
-	 (colors (vector (#/blackColor ns:ns-color)))
-	 (fonts (vector font bold-font oblique-font bold-oblique-font))
-	 (styles (make-instance 'ns:ns-mutable-array)))
+	       (fm (#/sharedFontManager ns:ns-font-manager))
+	       (bold-font (#/convertFont:toHaveTrait: fm font #$NSBoldFontMask))
+	       (oblique-font (#/convertFont:toHaveTrait: fm font #$NSItalicFontMask))
+	       (bold-oblique-font (#/convertFont:toHaveTrait:
+			                       fm font (logior #$NSItalicFontMask
+					                                   #$NSBoldFontMask)))
+	       (colors (vector (#/blackColor ns:ns-color)))
+	       (fonts (vector font bold-font oblique-font bold-oblique-font))
+	       (styles (make-instance 'ns:ns-mutable-array)))
     (dotimes (c (length colors))
       (dotimes (i 4)
-	(let* ((mask (logand i 3))
-	       (f (svref fonts mask)))
-	  (#/addObject: styles 
-			(rme-create-text-attributes :font f
-						    :color (svref colors c)
-						    :obliqueness
-						    (if (logbitp 1 i)
-						      (when (eql f font)
-							0.15f0))
-						    :stroke-width
-						    (if (logbitp 0 i)
-						      (when (eql f font)
-							-10.0f0)))))))
+	      (let* ((mask (logand i 3))
+	             (f (svref fonts mask)))
+	        (#/addObject: styles
+			                  (rme-create-text-attributes :font f
+						                                        :color (svref colors c)
+						                                        :obliqueness
+						                                        (if (logbitp 1 i)
+						                                          (when (eql f font)
+							                                          0.15f0))
+						                                        :stroke-width
+						                                        (if (logbitp 0 i)
+						                                          (when (eql f font)
+							                                          -10.0f0)))))))
     styles))
-
-(defun make-editor-style-map ()
-  (rme-make-editor-style-map))
-
-#+nil
-(defun make-editor-style-map ()
-  (let* ((font-name *default-font-name*)
-	 (font-size *default-font-size*)
-         (font (default-font :name font-name :size font-size))
-         (bold-font (let* ((f (default-font :name font-name :size font-size :attributes '(:bold))))
-                      (unless (eql f font) f)))
-         (oblique-font (let* ((f (default-font :name font-name :size font-size :attributes '(:italic))))
-                      (unless (eql f font) f)))
-         (bold-oblique-font (let* ((f (default-font :name font-name :size font-size :attributes '(:bold :italic))))
-                      (unless (eql f font) f)))
-	 (color-class (find-class 'ns:ns-color))
-	 (colors (vector (#/blackColor color-class)))
-	 (styles (make-instance 'ns:ns-mutable-array
-                                :with-capacity (the fixnum (* 4 (length colors)))))
-         (bold-stroke-width -10.0f0)
-         (fonts (vector font (or bold-font font) (or oblique-font font) (or bold-oblique-font font)))
-         (real-fonts (vector font bold-font oblique-font bold-oblique-font))
-	 (s 0))
-    (declare (dynamic-extent fonts real-fonts colors))
-    (dotimes (c (length colors))
-      (dotimes (i 4)
-        (let* ((mask (logand i 3)))
-          (#/addObject: styles
-                        (create-text-attributes :font (svref fonts mask)
-                                                :color (svref colors c)
-                                                :obliqueness
-                                                (if (logbitp 1 i)
-                                                  (unless (svref real-fonts mask)
-                                                    0.15f0))
-                                                :stroke-width
-                                                (if (logbitp 0 i)
-                                                  (unless (svref real-fonts mask)
-                                                    bold-stroke-width)))))
-	(incf s)))
-    (#/retain styles)))
 
 (defun make-hemlock-buffer (&rest args)
   (let* ((buf (apply #'hi::make-buffer args)))

@@ -5970,8 +5970,6 @@
     (eq op (%nx1-operator simple-function))
     (eq op (%nx1-operator fixnum))
     (eq op (%nx1-operator immediate))
-    #+nil
-    (eq op (%nx1-operator bound-special-ref))
     (and (or (eq op (%nx1-operator inherited-arg)) 
              (eq op (%nx1-operator lexical-reference)))
          (or (%ilogbitp $vbitpunted (setq bits (nx-var-bits (car (acode-operands untyped-form)))))
@@ -5984,7 +5982,6 @@
 
 (defun x862-ref-symbol-value (seg vreg xfer sym check-boundp)
   (declare (ignorable check-boundp))
-  ;;(when *backend-use-linear-scan* (linear-scan-bailout"special var ref"))
   (setq check-boundp (not *x862-reckless*))
   (with-x86-local-vinsn-macros (seg vreg xfer)
     (when (or check-boundp vreg)

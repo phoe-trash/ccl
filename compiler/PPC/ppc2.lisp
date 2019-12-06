@@ -4367,8 +4367,6 @@
     (eq op (%nx1-operator simple-function))
     (eq op (%nx1-operator fixnum))
     (eq op (%nx1-operator immediate))
-    #+nil
-    (eq op (%nx1-operator bound-special-ref))
     (and (or (eq op (%nx1-operator inherited-arg)) 
              (eq op (%nx1-operator lexical-reference)))
          (or (%ilogbitp $vbitpunted (setq bits (nx-var-bits (car (acode-operands form)))))

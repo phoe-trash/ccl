@@ -149,10 +149,7 @@
                             (:unsigned-fullword '%get-unsigned-long)
                             (:unsigned-halfword '%get-unsigned-word)
                             (:unsigned-byte '%get-unsigned-byte)
-                            (:address
-                             #+nil
-                             (dynamic-extent-names name)
-                             '%get-ptr))
+                            (:address '%get-ptr))
                           ,stack-ptr
                           ,(if fp (next-fpr) (next-gpr)))))
               (when name (lets (list name access-form))))))))))
