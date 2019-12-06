@@ -2280,19 +2280,9 @@ has immediate effect."
       ,init-list-sym)
    ))
 
-; This can only be partially backward-compatible: even if only
-; the "name" arg is supplied, the old function would create the
-; package if it didn't exist.
-; Should see how well this works & maybe flush the whole idea.
-
 (defmacro in-package (name)
-  (let ((form nil))
-    (when (quoted-form-p name)
-      (warn "Unquoting argument ~S to ~S." name 'in-package )
-      (setq name (cadr name)))    
-    (setq form `(set-package ,(string name)))
-    `(eval-when (:execute :load-toplevel :compile-toplevel)
-      ,form)))
+  `(eval-when (:execute :load-toplevel :compile-toplevel)
+     (set-package ,(string name))))
 
 ;;; DEFPACKAGE
 

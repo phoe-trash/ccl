@@ -1982,7 +1982,7 @@ brief example follows:
 
 ;;; It is necessary to specify that the customizations go in
 ;;; the hemlock package.
-(in-package 'hemlock)
+(in-package :hemlock)
 
 ;;; Bind @hid[Kill Previous Word] to @binding[M-h].
 (bind-key "Kill Previous Word" '#(#\m-h))
