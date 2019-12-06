@@ -243,7 +243,6 @@
 (defun structref-info (sym &optional env)
   (let ((info (or (and env (environment-structref-info sym env))
                   (gethash sym %structure-refs%))))
-    ;; This can be removed once $fasl-min-vers is greater than #x5e
     (when (or (fixnump info)
               (and (consp info) (fixnump (%cdr info))))
       ;; Old style, without struct type info.
