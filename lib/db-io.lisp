@@ -74,7 +74,6 @@
 #+openmcl
 (progn
 
-  #-BOOTSTRAPPED ;; remove once bootstrapped.
   (unless (fboundp 'defaulted-native-namestring) (fset 'defaulted-native-namestring #'native-translated-namestring))
 
   ;;; Given a (possibly logical) PATHNAME, return a corresponding namestring

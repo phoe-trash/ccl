@@ -1893,7 +1893,6 @@ Or something. Right? ~s ~s" var varbits))
 	(nx1-transformed-form context form env)))))
 
 (defun nx1-form (context form &optional (*nx-lexical-environment* *nx-lexical-environment*))
-  #-bootstrapped
   (unless (member context '(nil :return :value))
     (break "bad context ~s" context))
   (let* ((*nx-form-type* (if (and (consp form) (eq (car form) 'the))
@@ -2308,7 +2307,7 @@ Or something. Right? ~s ~s" var varbits))
     (when (and (eq (def-info.function-type info) 'defgeneric)
                (logbitp $lfbits-keys-bit bits)
                (not (logbitp $lfbits-aok-bit bits))
-	       #-BOOTSTRAPPED (fboundp 'def-info-method.keyvect)
+	             (fboundp 'def-info-method.keyvect)
                (loop for m in (def-info.methods info)
                      thereis (null (def-info-method.keyvect m))))
       ;; Some method has &aok, don't bother checking keywords.
@@ -2329,8 +2328,8 @@ Or something. Right? ~s ~s" var varbits))
           (or (nx1-check-call-bits bits arglist spread-p) ;; never deferred
               (nx1-check-call-keywords def bits keyvect arglist spread-p))
         (when reason
-          #-BOOTSTRAPPED (unless (find-class 'undefined-keyword-reference nil)
-                           (return-from nx1-check-call-args nil))
+          (unless (find-class 'undefined-keyword-reference nil)
+            (return-from nx1-check-call-args nil))
           (values (if defer-p
                     :deferred-mismatch
                     (typecase def

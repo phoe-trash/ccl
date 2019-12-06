@@ -244,7 +244,6 @@
   (let ((info (or (and env (environment-structref-info sym env))
                   (gethash sym %structure-refs%))))
     ;; This can be removed once $fasl-min-vers is greater than #x5e
-    #-BOOTSTRAPPED
     (when (or (fixnump info)
               (and (consp info) (fixnump (%cdr info))))
       ;; Old style, without struct type info.

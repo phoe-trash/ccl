@@ -1017,15 +1017,8 @@
                            ((type= ctype
                                    (specifier-type '(unsigned-byte 64)))
                             `(the (unsigned-byte 64) (require-u64 ,arg)))
-                           #+nil
                            ((and (symbolp type)
-                                 (let ((simpler (type-predicate type)))
-                                   (if simpler `(the ,type (%require-type ,arg ',simpler))))))
-                           #+nil
-                           ((and (symbolp type)(find-class type nil env))
-                            `(%require-type-class-cell ,arg (load-time-value (find-class-cell ',type t))))
-                           ((and (symbolp type)
-                                 #-bootstrapped-this (fboundp 'require-structure-type)
+                                 (fboundp 'require-structure-type)
                                  (structure-class-p type env))
                             `(require-structure-type ,arg ',(find-class-cell type t)))
                            (t (let* ((val (gensym)))

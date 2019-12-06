@@ -25,7 +25,6 @@
 (defconstant $afpAccessDenied -5000) ; which name to use?
 
 
-#-BOOTSTRAPPED ;; get rid of this once bootstrapped
 (progn
 (unless (fboundp 'native-to-filename) (fset 'native-to-filename #'identity))
 (unless (fboundp 'native-to-namestring) (fset 'native-to-namestring #'identity)))

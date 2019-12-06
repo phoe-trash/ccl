@@ -265,7 +265,7 @@ corresponding values in the CDR of VALUE."
 (defun send-event-if-open (target event)
   (send-event target event :ignore-errors t))
 
-#-bootstrapped (fmakunbound 'read-sexp)
+(fmakunbound 'read-sexp)
 
 ;;This assumes only one process reads from the command stream or the read-buffer, so don't need locking.
 (defmethod read-sexp ((conn connection))
