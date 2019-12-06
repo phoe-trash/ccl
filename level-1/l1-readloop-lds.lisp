@@ -786,7 +786,7 @@ commands but aren't")
 
         (clear-input *debug-io*)
         (setq *error-reentry-count* 0)  ; succesfully reported error
-        (ignoring-without-interrupts
+        (with-interrupts-enabled
           (unwind-protect
                (progn
                  (application-ui-operation *application*

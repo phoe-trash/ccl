@@ -109,7 +109,7 @@
                              (mapcar (lambda (v f) (set v (funcall f))) vars inits)
                              (let ((condition (make-condition 'interrupt-signal-condition))
                                    (*top-error-frame* (%current-exception-frame)))
-                               (ignoring-without-interrupts
+                               (with-interrupts-enabled
                                  (when *invoke-debugger-hook-on-interrupt*
                                    (let* ((hook *debugger-hook*)
                                           (*debugger-hook* nil))

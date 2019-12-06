@@ -845,20 +845,6 @@
   (restore-simple-frame)
   (single-value-return))
 
-;;; This was intentded to work around a bug in #_nanosleep in early
-;;; Leopard test releases.  It's probably not necessary any more; is
-;;; it still called ?
-
-(defx86lapfunction %check-deferred-gc ()
-  (btq ($ (+ arch::tcr-flag-bit-pending-suspend target::fixnumshift)) (:rcontext x8664::tcr.flags))
-  (movl ($ (target-nil-value)) (% arg_z.l))
-  (jae @done)
-  (ud2a)
-  (:byte 3)
-  (movl ($ (target-t-value)) (% arg_z.l))
-  @done
-  (single-value-return))
-
 (defx86lapfunction %%tcr-interrupt ((target arg_z))
   (check-nargs 1)
   (ud2a)

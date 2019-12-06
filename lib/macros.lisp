@@ -2241,11 +2241,13 @@ to open."
 
 (defsetf find-class setf-find-class)
 
-(defmacro restoring-interrupt-level (var &body body)
-  `(unwind-protect
-    (progn ,@body)
-    (restore-interrupt-level ,var)
-    (%interrupt-poll)))
+(defmacro with-deferred-gc (&body body)
+  "Execute BODY without responding to the signal used to suspend
+threads for GC.  BODY must be very careful not to do anything which
+could cause an exception (note that attempting to allocate lisp memory
+may cause an exception.)"
+  `(let* ((*interrupt-level* -2))
+     ,@body))
 
 (defmacro without-interrupts (&body body)
   "Evaluate its body in an environment in which process-interrupt
@@ -2258,18 +2260,6 @@ requests are deferred."
 has immediate effect."
   `(let* ((*interrupt-level* 0))
     ,@body))
-
-;;; undoes the effect of one enclosing without-interrupts during execution of body.
-(defmacro ignoring-without-interrupts (&body body)
-  `(let* ((*interrupt-level* 0))
-    ,@body))
-
-
-
-(defmacro error-ignoring-without-interrupts (format-string &rest format-args)
-  `(ignoring-without-interrupts
-    (error ,format-string ,@format-args)))
-
 
 ;init-list-default: if there is no init pair for <keyword>,
 ;    add a <keyword> <value> pair to init-list
@@ -3246,24 +3236,6 @@ its body with the lock held."
       (%lock-gc-lock)
       ,@body)
     (%unlock-gc-lock)))
-
-(defmacro with-deferred-gc (&body body)
-  "Execute BODY without responding to the signal used to suspend
-threads for GC.  BODY must be very careful not to do anything which
-could cause an exception (note that attempting to allocate lisp memory
-may cause an exception.)"
-  `(let* ((*interrupt-level* -2))
-    ,@body))
-
-(defmacro allowing-deferred-gc (&body body)
-  "Within the extent of a surrounding WITH-DEFERRED-GC, allow GC."
-  `(let* ((*interrupt-level* -1))
-    (%check-deferred-gc)
-    ,@body))
-
-(defmacro defer-gc ()
-  `(setq *interrupt-level* -2))
-
 
 (defmacro with-pointer-to-ivector ((ptr ivector) &body body)
   "Executes BODY with PTR bound to a pointer to the first byte of data

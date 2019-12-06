@@ -982,15 +982,6 @@
   #+darinppc32-target (mr arg_z 0)
   (blr))
 
-(defppclapfunction %check-deferred-gc ()
-  (ldr imm0 target::tcr.flags target::rcontext)
-  (slri. imm0 imm0 (- (1- target::nbits-in-word) (+ arch::tcr-flag-bit-pending-suspend target::fixnumshift)))
-  (li arg_z nil)
-  (bgelr)
-  (uuo_interr arch::error-propagate-suspend rzero)
-  (li arg_z t)
-  (blr))
-
 (defppclapfunction %%tcr-interrupt ((target arg_z))
   (check-nargs 1)
   (uuo_interr arch::error-interrupt rzero)

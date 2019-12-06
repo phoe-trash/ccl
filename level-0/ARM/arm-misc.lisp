@@ -1097,18 +1097,6 @@
   #+darinppc32-target (mov arg_z 0)
   (bx lr))
 
-#+bad-idea
-(defarmlapfunction %check-deferred-gc ()
-  (ldr imm0 arm::tcr.flags arm::rcontext)
-  (slri. imm0 imm0 (- (1- arm::nbits-in-word) (+ arch::tcr-flag-bit-pending-suspend arm::fixnumshift)))
-  (li arg_z nil)
-  (bgelr)
-  (uuo_interr arch::error-propagate-suspend rzero)
-  (li arg_z t)
-  (bx lr))
-
-
-
 (defarmlapfunction %%tcr-interrupt ((target arg_z))
   (check-nargs 1)
   (uuo-kernel-service (:$  arch::error-interrupt))
