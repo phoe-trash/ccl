@@ -794,7 +794,7 @@ form is not evaluated if the variable is already BOUNDP."
 (defmacro defloadvar (var value &optional doc)
   `(progn
      (defstaticvar ,var ,nil ,@(if doc `(,doc)))
-     (def-ccl-pointers ,var ()
+     (def-ccl-pointers (defloadvar ,var) ()
        (setq ,var ,value))
      ',var))
 
@@ -1621,27 +1621,25 @@ to open."
            (declare (dynamic-extent ,thunk))
           (%print-unreadable-object ,object ,stream ,type ,identity ,thunk)))
       `(%print-unreadable-object ,object ,stream ,type ,identity nil))))
-;; Pointers and Handles
 
-;;Add function to lisp system pointer functions, and run it if it's not already
-;; there.
-(defmacro def-ccl-pointers (name arglist &body body &aux (old (gensym)))
-  `(flet ((,name ,arglist ,@body))
-     (let ((,old (member ',name *lisp-system-pointer-functions* :key #'function-name)))
-       (if ,old
-         (rplaca ,old #',name)
-         (progn
-           (push #',name *lisp-system-pointer-functions*)
-           (,name))))))
+;;; Pointers and Handles:
+;;; Add function to lisp system/user pointer function set, and run it if it's not
+;;; already there.
+(defun %def-pointers (pointer-set name arglist body
+                      &aux (old (gensym "OLD")) (fn (gensym "FN")))
+  `(let* ((,fn (nfunction ,name (lambda ,arglist ,@body)))
+          (,old (member ',name ,pointer-set :key #'function-name :test #'equal)))
+     (if ,old
+       (rplaca ,old ,fn)
+       (progn
+         (push ,fn ,pointer-set)
+         (funcall ,fn)))))
 
-(defmacro def-load-pointers (name arglist &body body &aux (old (gensym)))
-  `(flet ((,name ,arglist ,@body))
-     (let ((,old (member ',name *lisp-user-pointer-functions* :key #'function-name)))
-       (if ,old
-         (rplaca ,old #',name)
-         (progn
-           (push #',name *lisp-user-pointer-functions*)
-           (,name))))))
+(defmacro def-ccl-pointers (name arglist &body body)
+  (%def-pointers '*lisp-system-pointer-functions* name arglist body))
+
+(defmacro def-load-pointers (name arglist &body body)
+  (%def-pointers '*lisp-user-pointer-functions* name arglist body))
 
 ;Queue up some code to run after ccl all loaded up, or, if ccl is already
 ;loaded up, just run it right now.
