@@ -242,7 +242,6 @@
   '(number-macros number-case-macro
     loop
     runtime
-    mcl-compat
     arglist
     edit-callers
     describe

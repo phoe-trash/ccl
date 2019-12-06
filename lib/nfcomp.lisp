@@ -649,7 +649,6 @@ Will differ from *compiling-file* during an INCLUDE")
              (fcomp-compile-toplevel-forms env))
             ((%macro) (fcomp-load-%macro form env))
             ;; ((%deftype) (fcomp-load-%deftype form))
-            ;; ((define-setf-method) (fcomp-load-define-setf-method form))
             (t (fcomp-random-toplevel-form form env)))))))))
 
 (defun fcomp-form-list (forms env processing-mode)

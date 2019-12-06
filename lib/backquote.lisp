@@ -89,13 +89,13 @@
     (when (null stack)
       (signal-reader-error stream "Comma not inside backquote"))
     (let ((*backquote-stack* (cdddr stack)))
-      (setq char (tyi stream))
+      (setq char (stream-read-char stream))
       (cond ((eq char #\@)
              (cons (%caddr stack) (read stream t nil t)))
             ((eq char #\.)
              (cons (%cadr stack) (read stream t nil t)))
             (t
-             (untyi char stream)
+             (stream-unread-char stream char)
              (cons (%car stack) (read stream t nil t))))))))
 
 (provide 'backquote)

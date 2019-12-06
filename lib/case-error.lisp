@@ -35,7 +35,7 @@
 ;;; value true, otherwise it is false.
 ;;;
 (defun assertion-value-prompt (place)
-  (let* ((nvals (length (nth-value 2 (get-setf-method-multiple-value place))))
+  (let* ((nvals (length (nth-value 2 (get-setf-expansion-aux place nil t))))
          (vals nil))
     (dotimes (i nvals)
       (if (eq nvals 1)

@@ -772,9 +772,6 @@
 		"APPLYHOOK"
 		"EVALHOOK"
 		"SPECIAL-FORM-P"
-		"GET-SETF-METHOD"
-		"GET-SETF-METHOD-MULTIPLE-VALUE"
-		"DEFINE-SETF-METHOD"
 )
   (:shadow "IN-PACKAGE"
            "FUNCTIONP"
@@ -1609,10 +1606,20 @@
     (non-supported 'font font)
     (require-type char 'character)))
 
+(defmacro define-setf-method (access-fn lambda-list &body body)
+  `(define-setf-expander ,access-fn ,lambda-list ,@body))
+
+(defun get-setf-method (form &optional environment)
+  (get-setf-expansion-aux form environment nil))
+
+(defun get-setf-method-multiple-value (form &optional environment)
+  "Like Get-Setf-Method, but may return multiple new-value variables."
+  (get-setf-expansion-aux form environment t))
+
 ; A tragic waste of precious silicon.
-(define-setf-method char-bit (place bit-name &environment env)
+(define-setf-expander char-bit (place bit-name &environment env)
   (multiple-value-bind (dummies vals newval setter getter)
-		       (get-setf-method place env)
+      (get-setf-expansion-aux place env nil)
     (let ((btemp (gensym))
 	  (gnuval (gensym)))
       (values `(,@dummies ,btemp)

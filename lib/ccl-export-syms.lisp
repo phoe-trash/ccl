@@ -163,9 +163,6 @@
      debugging-function-name
      *make-package-use-defaults*
      *autoload-lisp-package*
-     tyo
-     tyi
-     untyi
      compiled-lexical-closure		; the type name
      lsh
 
@@ -607,14 +604,11 @@
      augment-environment
      declaration-information
      define-declaration
-     define-setf-method
      evalhook
      enclose
      function-information
      generic-flet
      generic-labels
-     get-setf-method
-     get-setf-method-multiple-value
      parse-macro
      variable-information
      with-added-methods

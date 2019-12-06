@@ -246,7 +246,7 @@
      ccl:def-load-pointers 
      ccl:define-definition-type
      ccl:defloadvar
-     ccl:defglobal ccl:defstaticvar ccl:define-declaration ccl:defstatic ccl:defcallback ccl:define-setf-method
+     ccl:defglobal ccl:defstaticvar ccl:define-declaration ccl:defstatic ccl:defcallback
      ccl:define-character-encoding
      ccl:defglobal
      hemlock-interface:defcommand

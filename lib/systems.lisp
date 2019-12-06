@@ -172,7 +172,6 @@
     (streams          "ccl:bin;streams"          ("ccl:lib;streams.lisp"))
     (pathnames        "ccl:bin;pathnames"        ("ccl:lib;pathnames.lisp"))
     (describe         "ccl:bin;describe"         ("ccl:lib;describe.lisp")) 
-    (mcl-compat       "ccl:bin;mcl-compat"       ("ccl:lib;mcl-compat.lisp"))
     (backtrace        "ccl:bin;backtrace"        ("ccl:lib;backtrace.lisp"))
     (ppc-backtrace    "ccl:bin;ppc-backtrace"    ("ccl:lib;ppc-backtrace.lisp"))
     (x86-backtrace    "ccl:bin;x86-backtrace"    ("ccl:lib;x86-backtrace.lisp"))

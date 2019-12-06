@@ -4534,7 +4534,7 @@
   "Return an output stream which will accumulate all output given it for
    the benefit of the function GET-OUTPUT-STREAM-STRING."
   (when (and element-type-p
-             (not (member element-type '(base-character character
+             (not (member element-type '(base-char character
                                          standard-char))))
     (unless (subtypep element-type 'character)
       (error "~S argument ~S is not a subtype of ~S."

@@ -36,15 +36,17 @@
 
 
 ;;; Note: The expansions for SETF and friends create needless LET-bindings of 
-;;; argument values when using get-setf-method.
-;;; That's why SETF no longer uses get-setf-method.  If you change anything
+;;; argument values when using get-setf-expansion.
+;;; That's why SETF no longer uses get-setf-expansion.  If you change anything
 ;;; here, be sure to make the corresponding change in SETF.
 
 (defun get-setf-expansion (form &optional env)
   "Return five values needed by the SETF machinery: a list of temporary
    variables, a list of values with which to fill them, a list of temporaries
    for the new values, the setting function, and the accessing function."
-  ;This isn't actually used by setf, but it has to be compatible.
+  ;; This isn't actually used by setf, but it has to be compatible.
+  ;; TODO: check if (GET-SETF-EXPANSION FORM ENV NIL) is required anywhere.
+  ;; Maybe all code is already compatible with multiple stores being returned.
   (get-setf-expansion-aux form env t))
 
 (defun get-setf-expansion-aux (form environment multiple-store-vars-p)
@@ -99,9 +101,9 @@
             (let ((form (defstruct-ref-transform temp (%cdr form) environment t))
                   (type (defstruct-type-for-typecheck (structref-info-type temp) environment)))
               (if (eq type 't)
-                (get-setf-method form environment)
+                (get-setf-expansion-aux form environment nil)
                 (multiple-value-bind (temps values storevars storeform accessform)
-                                     (get-setf-method form environment)
+                    (get-setf-expansion-aux form environment nil)
                   (values temps values storevars
                           (let ((storevar (first storevars)))
                             `(the ,type
@@ -144,7 +146,7 @@
 ;;; new-value arg at the end.
 ;;;
 ;;; A SETF-METHOD-EXPANDER property is created by the long form of DEFSETF or
-;;; by DEFINE-SETF-METHOD.  It is a function that is called on the reference
+;;; by DEFINE-SETF-EXPANDER.  It is a function that is called on the reference
 ;;; form and that produces five values: a list of temporary variables, a list
 ;;; of value forms, a list of the single store-value form, a storing function,
 ;;; and an accessing function.
@@ -287,7 +289,7 @@
       `(defmacro ,name (,reference ,@lambda-list &environment ,env)
          ,doc-string
          (multiple-value-bind (dummies vals newval setter getter)
-                                (get-setf-method ,reference ,env)
+             (get-setf-expansion-aux ,reference ,env nil)
              (do ((d dummies (cdr d))
                   (v vals (cdr v))
                   (let-list nil (cons (list (car d) (car v)) let-list)))
@@ -310,7 +312,7 @@ incremented by the second argument, DELTA, which defaults to 1."
                     (not (nth-value 1 (%symbol-macroexpand delta env))))))
     `(setq ,place (+ ,place ,delta))
     (multiple-value-bind (dummies vals newval setter getter)
-        (get-setf-method place env)
+        (get-setf-expansion-aux place env nil)
       (let ((d (gensym)))
         `(let* (,@(mapcar #'list dummies vals)
                 (,d ,delta)
@@ -326,7 +328,7 @@ decremented by the second argument, DELTA, which defaults to 1."
                     (not (nth-value 1 (%symbol-macroexpand delta env))))))
     `(setq ,place (- ,place ,delta))
     (multiple-value-bind (dummies vals newval setter getter)
-        (get-setf-method place env)
+        (get-setf-expansion-aux place env nil)
       (let* ((d (gensym))
              ;; Doesn't propagate inferred types, but better than nothing.
              (d-type (cond ((constantp delta) (type-of delta))
@@ -359,7 +361,7 @@ decremented by the second argument, DELTA, which defaults to 1."
           (push place places)
           (push valform values)
           (multiple-value-bind (temps vals newvals setter getter)
-                               (get-setf-method-multiple-value place env)
+              (get-setf-expansion-aux place env t)
             (push (list temps vals newvals setter getter) tempsets)))
         (dolist (temp tempsets)
           (destructuring-bind (temps vals newvals setter getter) temp
@@ -460,9 +462,9 @@ decremented by the second argument, DELTA, which defaults to 1."
 (defsetf %fixnum-ref %fixnum-set)
 (defsetf %fixnum-ref-double-float %fixnum-set-double-float)
 
-(define-setf-method the (typespec expr &environment env)
+(define-setf-expander the (typespec expr &environment env)
   (multiple-value-bind (dummies vals newval setter getter)
-                       (get-setf-method expr env)
+      (get-setf-expansion-aux expr env nil)
     (let ((store-var (gensym)))
       (values
        dummies
@@ -473,7 +475,7 @@ decremented by the second argument, DELTA, which defaults to 1."
        `(the ,typespec ,getter)))))
 
    
-(define-setf-method apply (function &rest args &environment env)
+(define-setf-expander apply (function &rest args &environment env)
   (if (and (listp function)
 	   (= (list-length function) 2)
 	   (eq (first function) 'function)
@@ -542,11 +544,11 @@ decremented by the second argument, DELTA, which defaults to 1."
           (setq temp (cons (gensym) temp)))))
 ;;;;;;;
 
-(define-setf-method getf (plist prop &optional (default () default-p)
-                                     &aux (prop-p (not (constantp prop env)))
-                                     &environment env)
+(define-setf-expander getf (plist prop &optional (default () default-p)
+                                       &aux (prop-p (not (constantp prop env)))
+                                       &environment env)
  (multiple-value-bind (vars vals stores store-form access-form)
-                      (get-setf-method plist env)
+     (get-setf-expansion-aux plist env nil)
    (when default-p (setq default (list default)))
    (let ((prop-var (if prop-p (gensym) prop))
          (store-var (gensym))
@@ -560,11 +562,11 @@ decremented by the second argument, DELTA, which defaults to 1."
          ,store-var)
       `(getf ,access-form ,prop-var ,@default-var)))))
 
-(define-setf-method getf-test (plist prop test &optional (default () default-p)
-                                       &aux (prop-p (not (quoted-form-p prop)))
-                                       &environment env)
+(define-setf-expander getf-test (plist prop test &optional (default () default-p)
+                                                 &aux (prop-p (not (quoted-form-p prop)))
+                                                 &environment env)
  (multiple-value-bind (vars vals stores store-form access-form)
-                      (get-setf-method plist env)
+     (get-setf-expansion-aux plist env nil)
    (when default-p (setq default (list default)))
    (let ((prop-var (if prop-p (gensym) prop))
          (test-var (gensym))
@@ -579,12 +581,12 @@ decremented by the second argument, DELTA, which defaults to 1."
          ,store-var)
       `(getf-test ,access-form ,prop-var ,test-var ,@default-var)))))
 
-(define-setf-method ldb (bytespec place &environment env)
+(define-setf-expander ldb (bytespec place &environment env)
   "The first argument is a byte specifier. The second is any place form
   acceptable to SETF. Replace the specified byte of the number in this
   place with bits from the low-order end of the new value."
   (multiple-value-bind (dummies vals newval setter getter)
-		       (get-setf-method place env)
+		  (get-setf-expansion-aux place env nil)
     (let ((btemp (gensym))
 	  (gnuval (gensym)))
       (values (cons btemp dummies)
@@ -596,12 +598,12 @@ decremented by the second argument, DELTA, which defaults to 1."
 	      `(ldb ,btemp ,getter)))))
 
 
-(define-setf-method mask-field (bytespec place &environment env)
+(define-setf-expander mask-field (bytespec place &environment env)
   "The first argument is a byte specifier. The second is any place form
   acceptable to SETF. Replaces the specified byte of the number in this place
   with bits from the corresponding position in the new value."
   (multiple-value-bind (dummies vals newval setter getter)
-		       (get-setf-method place env)
+		  (get-setf-expansion-aux place env nil)
     (let ((btemp (gensym))
 	  (gnuval (gensym)))
       (values (cons btemp dummies)
@@ -627,7 +629,7 @@ decremented by the second argument, DELTA, which defaults to 1."
          (body setters))
     (dolist (place places)
       (multiple-value-bind (vars values storevars setter getter)
-                           (get-setf-method-multiple-value place env)
+          (get-setf-expansion-aux place env t)
         (dolist (v vars)
           (push (list v (pop values)) let-list))
         (push setter (cdr setters))
@@ -662,13 +664,13 @@ decremented by the second argument, DELTA, which defaults to 1."
            (body setters))
       (multiple-value-bind (final-vars final-values final-storevars
                                        final-setter last-getter)
-                           (get-setf-method-multiple-value final-place env)
+          (get-setf-expansion-aux final-place env t)
         (dolist (v final-vars)
           (push (list v (pop final-values)) last-let-list))
         (push final-setter (cdr setters))
         (dolist (place places)
           (multiple-value-bind (vars values storevars setter getter)
-                               (get-setf-method-multiple-value place env)
+              (get-setf-expansion-aux place env t)
             (dolist (v vars)
               (push (list v (pop values)) let-list))
             (push setter (cdr setters))
@@ -697,7 +699,7 @@ decremented by the second argument, DELTA, which defaults to 1."
   (if (not (consp place))
     `(setq ,place (cons ,value ,place))
     (multiple-value-bind (dummies vals store-var setter getter)
-                         (get-setf-method place env)
+        (get-setf-expansion-aux place env nil)
       (let ((valvar (gensym)))
         `(let* ((,valvar ,value)
                 ,@(mapcar #'list dummies vals)
@@ -715,7 +717,7 @@ decremented by the second argument, DELTA, which defaults to 1."
     `(setq ,place (adjoin ,value ,place ,@keys))
     (let ((valvar (gensym)))
       (multiple-value-bind (dummies vals store-var setter getter)
-                           (get-setf-method place env)
+          (get-setf-expansion-aux place env nil)
         `(let* ((,valvar ,value)
                 ,@(mapcar #'list dummies vals)
                 (,(car store-var) (adjoin ,valvar ,getter ,@keys)))
@@ -733,7 +735,7 @@ decremented by the second argument, DELTA, which defaults to 1."
         `(prog1 (car ,place) (setq ,place (cdr (the list ,place)))))))
   (let ((value (gensym)))
     (multiple-value-bind (dummies vals store-var setter getter)
-                         (get-setf-method place env)
+        (get-setf-expansion-aux place env nil)
       `(let* (,@(mapcar #'list dummies vals)
               (,value ,getter)
               (,(car store-var) (cdr ,value)))
@@ -752,7 +754,7 @@ decremented by the second argument, DELTA, which defaults to 1."
   remove the property specified by the indicator. Returns T if such a
   property was present, NIL if not."
   (multiple-value-bind (dummies vals newval setter getter)
-                       (get-setf-method place env)
+      (get-setf-expansion-aux place env nil)
     (do* ((d dummies (cdr d))
           (v vals (cdr v))
           (let-list nil)
@@ -783,7 +785,7 @@ decremented by the second argument, DELTA, which defaults to 1."
   remove the property specified by the indicator.  Returns T if such a
   property was present, NIL if not."
   (multiple-value-bind (dummies vals newval setter getter)
-                       (get-setf-method place env)
+      (get-setf-expansion-aux place env nil)
     (do* ((d dummies (cdr d))
           (v vals (cdr v))
           (let-list nil)
@@ -818,7 +820,7 @@ decremented by the second argument, DELTA, which defaults to 1."
 	 (newvals ())) 
     (dolist (place places) 
       (multiple-value-bind (dummies vals newval setter getter) 
-	  (get-setf-expansion place env) 
+	  (get-setf-expansion-aux place env nil)
 	(setf all-dummies (append all-dummies dummies (cdr newval))) 
 	(setf all-vals (append all-vals vals (mapcar (constantly nil) (cdr newval)))) 
 	(setf newvals (append newvals (list (car newval)))) 

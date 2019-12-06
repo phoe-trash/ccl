@@ -79,11 +79,6 @@
 (defun %integer-to-string (int &optional (radix 10))
   (%pr-integer int radix nil t))
 
-
-;;; it may be hard to believe, but this is much faster than the lap
-;;; version (3 or 4X) for fixnums that is (stream-write-string vs
-;;; stream-tyo ???)
-
 (defun %pr-integer (int &optional (radix 10) (stream *standard-output*) return-it  negate-it)
   (declare (fixnum radix)) ; assume caller has checked
   (if stream 

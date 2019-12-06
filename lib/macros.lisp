@@ -545,7 +545,7 @@
 ;;; Setf.
 
 ;  If you change anything here, be sure to make the corresponding change
-;  in get-setf-method.
+;  in get-setf-expander.
 (defmacro setf (&rest args &environment env)
   "Takes pairs of arguments like SETQ. The first is a place and the second
   is the value that is supposed to go into that place. Returns the last
@@ -556,7 +556,7 @@
     (cond ((eq temp 2)
            (let* ((form (car args)) 
                   (value (cadr args)))
-             ;This must match get-setf-method .
+             ;This must match get-setf-expander.
              (cond ((atom form)
                     (progn
                       (unless (symbolp form)(signal-program-error $XNotSym form))
@@ -1280,7 +1280,7 @@ are no Forms, OR returns NIL."
 
 (defmacro bitopf ((op bit place) &environment env)
   (multiple-value-bind (vars vals stores store-form access-form)
-                       (get-setf-method place env)
+      (get-setf-expansion-aux place env nil)
     (let* ((constant-bit-p (constantp bit))
            (bitvar (if constant-bit-p bit (gensym))))
       `(let ,(unless constant-bit-p `((,bitvar ,bit)))          ; compiler isn't smart enough

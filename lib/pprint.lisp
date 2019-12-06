@@ -102,7 +102,7 @@
 ; 05/22/91 Modified for MCL 2.0b
 ;;;;;;;;;;;;;;
 ;;; lisp: => cl:
-;;; string-char => character (or base-character?)
+;;; string-char => character (or base-char?)
 ;;; #-ccl-2 compiled format and format and much else
 ;;;  put the xp-stream in the xp-structure
 ;;; write-char => write-char+ in pretty-loop
