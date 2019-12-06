@@ -1728,11 +1728,6 @@ to open."
   `(handler-bind ((decoding-problem #'error))
     ,@body))
 
-(defmacro with-pointers (speclist &body body)
-   (with-specs-aux 'with-pointer speclist body))
-
-
-
 (defmacro with-cstrs (speclist &body body)
    (with-specs-aux 'with-cstr speclist body))
 
