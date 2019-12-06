@@ -2426,10 +2426,6 @@ has immediate effect."
        (macrolet ((,mname () `(%pkg-iter-next ,',state)))
          ,@body))))
 
-;;; Bind per-thread specials which help with lock accounting.
-(defmacro with-lock-context (&body body)
-  `(progn ,@body))
-
 (defmacro with-lock-grabbed ((lock &optional
                                    (whostate "Lock"))
                              &body body)
@@ -2438,15 +2434,14 @@ the lock held."
   (declare (ignore whostate))
   (let* ((locked (gensym))
          (l (gensym)))
-    `  (with-lock-context
-         (let ((,locked (make-lock-acquisition))
-               (,l ,lock))
-           (declare (dynamic-extent ,locked))
-           (unwind-protect
-                (progn
-                  (%lock-recursive-lock-object ,l ,locked )
-                  ,@body)
-             (when (lock-acquisition.status ,locked) (%unlock-recursive-lock-object ,l)))))))
+    `(let ((,locked (make-lock-acquisition))
+           (,l ,lock))
+       (declare (dynamic-extent ,locked))
+       (unwind-protect
+            (progn
+              (%lock-recursive-lock-object ,l ,locked )
+              ,@body)
+         (when (lock-acquisition.status ,locked) (%unlock-recursive-lock-object ,l))))))
 
  
 (defmacro with-exception-lock (&body body)
@@ -3144,30 +3139,28 @@ Return the pointer."
 its body with the lock held."
   (let* ((locked (gensym))
          (p (gensym)))
-    `(with-lock-context
-       (let* ((,locked (make-lock-acquisition))
-              (,p ,lock))
-         (declare (dynamic-extent ,locked))
-         (unwind-protect
-              (progn
-                (read-lock-rwlock ,p ,locked)
-                ,@body)
-           (when (lock-acquisition.status ,locked) (unlock-rwlock ,p)))))))
+    `(let* ((,locked (make-lock-acquisition))
+            (,p ,lock))
+       (declare (dynamic-extent ,locked))
+       (unwind-protect
+            (progn
+              (read-lock-rwlock ,p ,locked)
+              ,@body)
+         (when (lock-acquisition.status ,locked) (unlock-rwlock ,p))))))
 
 (defmacro with-write-lock ((lock) &body body)
   "Wait until the given lock is available for write access, then execute
 its body with the lock held."
   (let* ((locked (gensym))
          (p (gensym)))
-    `(with-lock-context
-       (let* ((,locked (make-lock-acquisition))
-              (,p ,lock))
-         (declare (dynamic-extent ,locked))
-         (unwind-protect
-              (progn
-                (write-lock-rwlock ,p ,locked)
-                ,@body)
-           (when (lock-acquisition.status ,locked) (unlock-rwlock ,p)))))))
+    `(let* ((,locked (make-lock-acquisition))
+            (,p ,lock))
+       (declare (dynamic-extent ,locked))
+       (unwind-protect
+            (progn
+              (write-lock-rwlock ,p ,locked)
+              ,@body)
+         (when (lock-acquisition.status ,locked) (unlock-rwlock ,p))))))
 
 (defmacro without-gcing (&body body)
   `(unwind-protect
