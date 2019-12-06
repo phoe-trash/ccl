@@ -570,7 +570,7 @@
                           ((setq temp (%setf-method accessor))
                            (if (symbolp temp)
                              `(,temp ,@(cdar args) ,value)
-                             (multiple-value-bind (dummies vals storevars setter #|getter|#)
+                             (multiple-value-bind (dummies vals storevars setter)
                                  (funcall temp form env)
                                (do* ((d dummies (cdr d))
                                      (v vals (cdr v))
@@ -579,9 +579,7 @@
                                      (setq let-list (nreverse let-list))
                                      `(let* ,let-list
                                        (declare (ignorable ,@dummies))
-                                       (multiple-value-bind ,storevars ,value
-                                         #|,getter|#
-                                         ,setter)))
+                                       (multiple-value-bind ,storevars ,value ,setter)))
                                  (push (list (car d) (car v)) let-list)))))
                           ((and (setq temp (structref-info accessor env))
                                 (accessor-structref-info-p temp)
