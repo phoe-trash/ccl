@@ -132,10 +132,10 @@
 ;;; 30-JAN-91  mk   In VAXLisp, when we redefine lisp:require, the compiler
 ;;;                 no longer automatically executes require forms when it
 ;;;                 encounters them in a file. The user can always wrap an
-;;;                 (eval-when (compile load eval) ...) around the require
-;;;                 form. Alternately, see commented out code near the
-;;;                 redefinition of lisp:require which redefines it as a
-;;;                 macro instead.
+;;;                 (eval-when (:compile-toplevel :load-toplevel :execute)
+;;;                 ...) around the require form. Alternately, see commented
+;;;                 out code near the redefinition of lisp:require which
+;;;                 redefines it as a macro instead.
 ;;; 30-JAN-91  mk   Added parameter :version to operate-on-system. If it is
 ;;;                 a number, that number is used as part of the binary
 ;;;                 directory name as the place to store and load files.
@@ -208,16 +208,15 @@
 ;;;                 the file, but not both. In other words, compiling the
 ;;;                 file satisfies the demand to load it. This is useful
 ;;;                 for PCL defmethod and defclass definitions, which wrap
-;;;                 an (eval-when (compile load eval) ...) around the body
-;;;                 of the definition -- we save time by not loading the
-;;;                 compiled code, since the eval-when forces it to be
-;;;                 loaded. Note that this may not be entirely safe, since
-;;;                 CLtL2 has added a :load keyword to compile-file, and
-;;;                 some lisps may maintain a separate environment for
-;;;                 the compiler. This feature is for the person who asked
-;;;                 that a :COMPILE-SATISFIES-LOAD keyword be added to
-;;;                 modules. It's named :COMPILE-ONLY instead to match
-;;;                 :LOAD-ONLY.
+;;;                 an (eval-when (:compile-toplevel :load-toplevel :execute)
+;;;                 ...) around the body of the definition -- we save time by
+;;;                 not loading the compiled code, since the eval-when forces it
+;;;                 to be loaded. Note that this may not be entirely safe, since
+;;;                 CLtL2 has added a :load keyword to compile-file, and some
+;;;                 lisps may maintain a separate environment for the compiler.
+;;;                 This feature is for the person who asked that a
+;;;                 :COMPILE-SATISFIES-LOAD keyword be added to modules. It's
+;;;                 named :COMPILE-ONLY instead to match :LOAD-ONLY.
 ;;; 11-FEB-91  mk   Now adds :mk-defsystem to features list, to allow
 ;;;                 special cased loading of defsystem if not already
 ;;;                 present.
@@ -834,7 +833,7 @@
 ;;; Massage CLtL2 onto *features* **
 ;;; ********************************
 ;;; Let's be smart about CLtL2 compatible Lisps:
-(eval-when (compile load eval)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   #+(or (and allegro-version>= (version>= 4 0)) :mcl :openmcl :sbcl)
   (pushnew :cltl2 *features*))
 
@@ -1028,7 +1027,7 @@
 #+(and :cltl2 (not (or :cmu :clisp :sbcl
 		       (and :excl (or :allegro-v4.0 :allegro-v4.1))
 		       :mcl)))
-(eval-when (compile load eval)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "MAKE")
     (make-package "MAKE" :nicknames '("MK") :use '("COMMON-LISP"))))
 
@@ -1047,7 +1046,7 @@
   (:nicknames :mk))
 
 #+(or :cltl2 :lispworks :scl)
-(eval-when (compile load eval)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (in-package "MAKE"))
 
 #+ecl
@@ -1107,7 +1106,7 @@
 ;;; the compile form, so that you can't use a defvar with a default value and
 ;;; then a succeeding export as well.
 
-(eval-when (compile load eval)
+(eval-when (:compile-toplevel :load-toplevel :execute)
    (defvar *special-exports* nil)
    (defvar *exports* nil)
    (defvar *other-exports* nil)
@@ -1165,13 +1164,13 @@
 ;;; in the user package, we may have to shadowing-import it.
 #|
 #-(or :sbcl :cmu :ccl :allegro :excl :lispworks :symbolics)
-(eval-when (compile load eval)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (import *exports* #-(or :cltl2 :lispworks) "USER"
 	            #+(or :cltl2 :lispworks) "COMMON-LISP-USER")
   (import *special-exports* #-(or :cltl2 :lispworks) "USER"
 	                    #+(or :cltl2 :lispworks) "COMMON-LISP-USER"))
 #+(or :sbcl :cmu :ccl :allegro :excl :lispworks :symbolics)
-(eval-when (compile load eval)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (import *exports* #-(or :cltl2 :lispworks) "USER"
 	            #+(or :cltl2 :lispworks) "COMMON-LISP-USER")
   (shadowing-import *special-exports*
@@ -1345,7 +1344,7 @@
 ;;; ********************************
 
 ;;; Massage people's *features* into better shape.
-(eval-when (compile load eval)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (dolist (feature *features*)
     (when (and (symbolp feature)   ; 3600
                (equal (symbol-name feature) "CMU"))
@@ -1459,7 +1458,7 @@
 
 ;;; mc 11-Apr-91: Bashes MCL's point reader, so commented out.
 #-:mcl
-(eval-when (compile load eval)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   ;; Define #@"foo" as a shorthand for (afs-binary-directory "foo").
   ;; For example,
   ;;    <cl> #@"foo"
@@ -2301,8 +2300,8 @@ D
   ;; Either compiles or loads the file, but not both. In other words,
   ;; compiling the file satisfies the demand to load it. This is useful
   ;; for PCL defmethod and defclass definitions, which wrap a
-  ;; (eval-when (compile load eval) ...) around the body of the definition.
-  ;; This saves time in some lisps.
+  ;; (eval-when (:compile-toplevel :load-toplevel :execute) ...)
+  ;; around the body of the definition. This saves time in some lisps.
   compile-only				; If T, will not load this
 					; file on operation :compile.
   #|| ISI Extension ||#
@@ -3889,14 +3888,14 @@ the system definition, if provided."
 
 ;;; Note that in some lisps, when the compiler sees a REQUIRE form at
 ;;; top level it immediately executes it. This is as if an
-;;; (eval-when (compile load eval) ...) were wrapped around the REQUIRE
+;;; (eval-when (:compile-toplevel :load-toplevel :execute) ...) were wrapped around the REQUIRE
 ;;; form. I don't see any easy way to do this without making REQUIRE
 ;;; a macro.
 ;;;
 ;;; For example, in VAXLisp, if a (require 'streams) form is at the top of
 ;;; a file in the system, compiling the system doesn't wind up loading the
 ;;; streams module. If the (require 'streams) form is included within an
-;;; (eval-when (compile load eval) ...) then everything is OK.
+;;; (eval-when (:compile-toplevel :load-toplevel :execute) ...) then everything is OK.
 ;;;
 ;;; So perhaps we should replace the redefinition of lisp:require
 ;;; with the following macro definition:
@@ -3920,7 +3919,7 @@ the system definition, if provided."
     (defmacro require-as-macro (module-name
 				&optional pathname definition-pname
 				default-action (version '*version*))
-      `(eval-when (compile load eval)
+      `(eval-when (:compile-toplevel :load-toplevel :execute)
 	 (new-require ,module-name ,pathname ,definition-pname
 		      ,default-action ,version)))
     (setf (macro-function #-(and :excl :sbcl :allegro-v4.0) 'lisp:require
@@ -4314,7 +4313,7 @@ the system definition, if provided."
 ;;; Component Operations ***********
 ;;; ********************************
 ;;; Define :compile/compile and :load/load operations
-(eval-when (load eval)
+(eval-when (:load-toplevel :execute)
 (component-operation :compile  'compile-and-load-operation)
 (component-operation 'compile  'compile-and-load-operation)
 (component-operation :load     'load-file-operation)
@@ -4531,7 +4530,7 @@ the system definition, if provided."
 	    (t
 	     nil)))))
 
-(eval-when (load eval)
+(eval-when (:load-toplevel :execute)
 (component-operation :clean    'delete-binaries-operation)
 (component-operation 'clean    'delete-binaries-operation)
 (component-operation :delete-binaries     'delete-binaries-operation)

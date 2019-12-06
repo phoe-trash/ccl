@@ -17,7 +17,7 @@
 ;;pathnames.lisp Pathnames for Coral Common LISP
 (in-package "CCL")
 
-(eval-when (eval compile)
+(eval-when (:compile-toplevel :execute)
   (require 'level-2)
   (require 'backquote)
 )

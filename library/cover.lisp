@@ -18,7 +18,7 @@
 
 (in-package :ccl)
 
-(eval-when (eval load compile)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (export '(*compile-code-coverage*
             report-coverage
             reset-coverage

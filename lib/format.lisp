@@ -86,7 +86,7 @@ and (nthcdr *format-arguments-variance* *format-arguments*)")
 ;;; process, and FORMS are the forms to do the processing.  They 
 ;;; invariably will involve a call to SUB-FORMAT.  CONTROL-STRING
 ;;; is guaranteed to be evaluated exactly once.
-(eval-when (compile eval load)
+(eval-when (:compile-toplevel :load-toplevel :execute)
 
 ; does this need to exist?????
 #|| ; put it out of its misery
@@ -1969,7 +1969,7 @@ and (nthcdr *format-arguments-variance* *format-arguments*)")
             ((single-floatp number) #\F)
             ((long-floatp) #\L))))
 |#
-(eval-when (eval compile load)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (defmacro format-exponent-marker (number)
     `(float-exponent-char ,number))
 )

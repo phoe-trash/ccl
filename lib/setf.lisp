@@ -149,7 +149,7 @@
 ;;; of value forms, a list of the single store-value form, a storing function,
 ;;; and an accessing function.
 
-(eval-when (eval compile)
+(eval-when (:compile-toplevel :execute)
   (require 'defstruct-macros))
   
 (defmacro set-get (symbol indicator value &optional (value1 () default-p))
@@ -168,7 +168,7 @@
     (signal-program-error $xnotsym access-fn))
   (multiple-value-bind (lambda-form doc)
                        (parse-macro-1 access-fn lambda-list body)
-    `(eval-when (load compile eval)
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
        (record-source-file ',access-fn 'setf-expander)
        (store-setf-method ',access-fn
                           (nfunction ,access-fn ,lambda-form)

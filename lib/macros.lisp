@@ -18,7 +18,7 @@
 
 (in-package "CCL")
 
-(eval-when (eval compile)
+(eval-when (:compile-toplevel :execute)
   (require "LEVEL-2")
   (require "BACKQUOTE")
   (require "DEFSTRUCT-MACROS"))
@@ -2901,7 +2901,7 @@ defcallback returns the callback pointer, e.g., the value of name."
         ,@body))))
 
 
-(eval-when (compile load eval)
+(eval-when (:compile-toplevel :load-toplevel :execute)
 (defmacro pprint-logical-block ((stream-symbol list
 				 &key (prefix "" prefixp)
                                       (per-line-prefix "" per-line-prefix-p)

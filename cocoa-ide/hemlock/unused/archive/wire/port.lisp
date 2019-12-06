@@ -102,7 +102,7 @@
      #+CLISP '(system::program-id)))
 
 #+(OR CLISP)
-(eval-when (compile load eval)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (pushnew :hemlock.serve-event *features*) )
 
 #-:hemlock.serve-event

@@ -17,7 +17,7 @@
 ;;;   a lisp and an external debugger.  This implements the server side, i.e. the lisp
 ;;;   being debugged.
 
-(eval-when (eval compile load)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (defpackage :swink
     (:use :cl :ccl)
     (:export

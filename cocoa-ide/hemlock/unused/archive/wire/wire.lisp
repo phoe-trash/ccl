@@ -59,7 +59,7 @@
 
 ;;; Stuff that needs to be ported:
 
-(eval-when (compile load eval) ;For macros in remote.lisp.
+(eval-when (:compile-toplevel :load-toplevel :execute) ;For macros in remote.lisp.
 
 (defconstant buffer-size 2048)
 

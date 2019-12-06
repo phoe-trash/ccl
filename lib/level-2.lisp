@@ -18,14 +18,14 @@
 
 (in-package "CCL")
 
-(eval-when (eval compile)
+(eval-when (:compile-toplevel :execute)
   (require "LEVEL-2")
   (require "BACKQUOTE")
   (require "DEFSTRUCT-MACROS"))
 
 
 
-(eval-when (eval compile)
+(eval-when (:compile-toplevel :execute)
   (require "LISPEQU"))
 
 

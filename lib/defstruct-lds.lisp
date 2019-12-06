@@ -18,7 +18,7 @@
 
 (in-package "CCL")
 
-(eval-when (eval compile)
+(eval-when (:compile-toplevel :execute)
   (require 'defstruct-macros)
 )
 

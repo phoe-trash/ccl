@@ -956,7 +956,7 @@ printed using \"#:\" syntax.  NIL means no prefix is printed.")
              t))
           (t nil))))
 
-(eval-when (compile eval)
+(eval-when (:compile-toplevel :execute)
 (defmacro %char-needs-escape-p (char escape &rest losers)
   (setq losers (remove-duplicates (cons escape losers)))
   (setq char (require-type char 'symbol))

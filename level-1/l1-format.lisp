@@ -22,7 +22,7 @@
 
 (in-package "CCL")
 
-(eval-when (eval compile load)  ;Load-time as well so CCL can use it.
+(eval-when (:compile-toplevel :load-toplevel :execute)  ;Load-time as well so CCL can use it.
   (defmacro defformat (char name &rest def)
     `(progn
        (add-format-char ,char (nfunction ,name (lambda . ,def)))
@@ -135,7 +135,7 @@
 
 
 #||
-(eval-when (load)
+(eval-when (:load-toplevel)
   ;The non-consing version.
 (defun sub-format (stream *format-index* *format-length*)
   (declare (special *format-index* *format-length*))
@@ -284,7 +284,7 @@ error
 done
     (restore_regs)
     ))
-) ;end of eval-when (load)
+) ;end of eval-when (:load-toplevel)
 
 ||#
 

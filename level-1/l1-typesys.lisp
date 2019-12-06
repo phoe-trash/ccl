@@ -414,7 +414,7 @@
 	     #'delegate-complex-intersection))))
 |#
 
-); eval-when (compile eval)
+); eval-when (:compile-toplevel :execute)
 
 
 (defun reparse-unknown-ctype (type)

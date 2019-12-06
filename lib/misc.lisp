@@ -16,7 +16,7 @@
 
 (in-package "CCL")
 
-(eval-when (eval compile)
+(eval-when (:compile-toplevel :execute)
   (require 'defstruct-macros))
 
 (defun short-site-name  ()

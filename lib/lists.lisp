@@ -16,7 +16,7 @@
 
 (in-package "CCL")
 
-(eval-when (eval compile)
+(eval-when (:compile-toplevel :execute)
   (require 'backquote)
   (require 'level-2))
 
@@ -222,7 +222,7 @@
 ;;; Use this with the following keyword args:
 ;;;  (&key (key #'identity) (test #'eql testp) (test-not nil notp))
 
-(eval-when (eval compile load)
+(eval-when (:compile-toplevel :load-toplevel :execute)
  (defmacro with-set-keys (funcall)
    `(cond (notp ,(append funcall '(:key key :test-not test-not)))
           (t ,(append funcall '(:key key :test test)))))
@@ -380,7 +380,7 @@
                  subtree
                  (cons car cdr)))))))
 
-(eval-when (compile eval)
+(eval-when (:compile-toplevel :execute)
   (defmacro nsublis-macro ()
     '(if notp
        (assoc (funcall key subtree) alist :test-not test-not)
@@ -458,7 +458,7 @@
 
 
 
-(eval-when (eval compile load)
+(eval-when (:compile-toplevel :load-toplevel :execute)
 ;;; Destination and source are setf-able and many-evaluable.
 ;;; Sets the source to the cdr, and "conses" the 1st elt of 
 ;;; source to destination.

@@ -64,7 +64,7 @@
 (defvar *current-core* nil)
 
 
-(eval-when (load eval #-BOOTSTRAPPED compile)
+(eval-when (#-BOOTSTRAPPED :compile-toplevel :load-toplevel :execute)
 
 (defstruct core-info
   pathname

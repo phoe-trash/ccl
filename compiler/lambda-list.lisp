@@ -111,6 +111,6 @@
    (setq tail (%cdr tail)))
   (return-from parse-body (values tail (nreverse decls) doc)))
 
-) ; end of eval-when (load)
+) ; end of eval-when (:load-toplevel)
 
 ;;; End of verify-lambda-list.lisp

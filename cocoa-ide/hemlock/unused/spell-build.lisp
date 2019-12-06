@@ -53,7 +53,7 @@
 ;;; for the entries uses three '(unsigned-byte 16) elements per descriptor
 ;;; unit.  See the beginning of Spell-Correct.Lisp.
 ;;;
-(eval-when (compile load eval)
+(eval-when (:compile-toplevel :load-toplevel :execute)
 
 (defconstant max-entry-count-estimate 15600)
 
@@ -73,7 +73,7 @@
 ;;; Of course, they should be identical, but it doesn't seem worth cluttering
 ;;; up Spell-Correct with macro generating macros for this file.
 
-(eval-when (compile eval)
+(eval-when (:compile-toplevel :execute)
 
 (defmacro new-hash2-increment (hash)
   `(- new-dictionary-size
