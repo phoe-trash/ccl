@@ -516,15 +516,6 @@
          (declare (dynamic-extent %restarts%))
          ,@body))))
 
-;Like with-simple-restart but takes a pre-consed restart.  Not CL.
-(defmacro with-restart (restart &body body &aux (cluster (gensym)))
-  `(let* ((,cluster (list ,restart)))
-     (declare (dynamic-extent ,cluster))
-     (catch ,cluster
-       (let ((%restarts% (cons ,cluster %restarts%)))
-         (declare (dynamic-extent %restarts%))
-         ,@body))))
-
 (defmacro ignore-errors (&rest forms)
   "Execute FORMS handling ERROR conditions, returning the result of the last
   form, or (VALUES NIL the-ERROR-that-was-caught) if an ERROR was handled."
