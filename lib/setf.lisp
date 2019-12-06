@@ -648,40 +648,6 @@ decremented by the second argument, DELTA, which defaults to 1."
       `(values (multiple-value-prog1 ,last-getter
          ,body)))))
 
-;(shiftf (car x)(cadr x) 3)
-
-#|
-(defmacro rotatef (&rest args &environment env)
-  (let* ((setf-result nil)
-         (let-result nil)
-         (last-store nil)
-         (fixpair nil))
-    (dolist (arg args)
-      (multiple-value-bind (vars vals storevars setter getter) 
-                           (get-setf-method arg env)
-        (dolist (var vars)
-          (push (list var (pop vals)) let-result))
-        (push (list last-store getter) let-result)
-        (unless fixpair (setq fixpair (car let-result)))
-        (push setter setf-result)
-        (setq last-store (car storevars))))
-    (rplaca fixpair last-store)
-    `(let* ,(nreverse let-result) ,@(nreverse setf-result) nil)))
-
-
-;(rotatef (blob x)(blob y))
-(defun blob (x) (values (car x)(cadr x)))
-(define-setf-method blob (x)
-    (let ((v1 (gensym))(v2 (gensym))(v3 (gensym)))
-    (values
-     (list v1)
-     (list x)
-     (list v2 v3)      
-     `(progn (setf (car ,v1) ,v2)
-             (setf (cadr ,v1) ,v3))     
-     `(values (car ,v1)(cadr ,v1)))))
-|#
-
 (defmacro rotatef (&rest args &environment env)
   "Takes any number of SETF-style place expressions. Evaluates all of the
    expressions in turn, then assigns to each place the value of the form to
@@ -779,40 +745,6 @@ decremented by the second argument, DELTA, which defaults to 1."
 
 (defmacro %pop (symbol)
   `(prog1 (%car ,symbol) (setq ,symbol (%cdr ,symbol))))
-
-#|
-(defmacro push (item place)
-  (if (not (consp place))
-    `(setq ,place (cons ,item ,place))
-    (let* ((arg-num (1- (length place)))
-           (place-args (make-gsym-list arg-num)))
-      `(let ,(cons (list 'nu-item item)
-                   (reverse (assoc-2-lists place-args (cdr place))))
-         (setf (,(car place) ,@place-args)
-               (cons nu-item (,(car place) ,@place-args)))))))
-
-(defmacro pushnew (item place &rest key-args)
-  (let ((item-gsym (gensym)))
-    (if (not (consp place))
-      `(let ((,item-gsym ,item))
-         (setq ,place (adjoin ,item-gsym ,place ,@key-args)))
-      (let* ((arg-num (1- (length place)))
-             (place-args (make-gsym-list arg-num)))
-        `(let ,(cons (list item-gsym item)
-                     (reverse (assoc-2-lists place-args (cdr place))))
-           (setf (,(car place) ,@place-args)
-                 (adjoin ,item-gsym (,(car place) ,@place-args)
-                         ,@key-args)))))))
-(defmacro pop (place)
-  (if (not (consp place))               ;  screw: symbol macros.
-    `(prog1 (car ,place) (setq ,place (%cdr ,place)))
-    (let* ((arg-num (1- (length place)))
-           (place-args (make-gsym-list arg-num)))
-      `(let ,(reverse (assoc-2-lists place-args (cdr place)))
-         (prog1 (car (,(car place) ,@place-args))
-           (setf (,(car place) ,@place-args)
-                 (cdr (,(car place) ,@place-args))))))))
-|#
 
 (defmacro remf (place indicator &environment env)
   "Place may be any place expression acceptable to SETF, and is expected
