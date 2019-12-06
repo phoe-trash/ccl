@@ -588,16 +588,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;; defmethod support ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (%fhave '%move-method-encapsulations-maybe ; Redefined in encapsulate
-        (qlfun boot-%move-method-encapsulations-maybe (m1 m2)
+        (nlambda boot-%move-method-encapsulations-maybe (m1 m2)
           (declare (ignore m1 m2))
           nil))
 
 (%fhave 'find-unencapsulated-definition  ;Redefined in encapsulate
-        (qlfun bootstrapping-find-unencapsulated-definition (fn)
+        (nlambda bootstrapping-find-unencapsulated-definition (fn)
 	  fn))
 
 (%fhave 'function-encapsulated-p  ;Redefined in encapsulate
-        (qlfun bootstrapping-function-encapsulated-p (fn)
+        (nlambda bootstrapping-function-encapsulated-p (fn)
 	  (declare (ignore fn))
           nil))
 
@@ -1289,7 +1289,7 @@ Generic-function's   : ~s~%" method (or (generic-function-name gf) gf) (flatten-
           (find-class name errorp environment)))))
 
 (fset 'pessimize-make-instance-for-class-name ;; redefined later
-      (qlfun bootstrapping-pessimize-make-instance-for-class-name (name) name))
+      (nlambda bootstrapping-pessimize-make-instance-for-class-name (name) name))
 
 (defun update-class-proper-names (name old-class new-class)
   (when name

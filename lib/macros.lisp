@@ -798,12 +798,6 @@ form is not evaluated if the variable is already BOUNDP."
        (setq ,var ,value))
      ',var))
 
-
-
-
-(defmacro qlfun (name args &body body)
-  `(nfunction ,name (lambda ,args ,@body)))
-
 (defmacro lfun-bits-known-function (f)
   (let* ((temp (gensym)))
     `(let* ((,temp (function-to-function-vector ,f)))

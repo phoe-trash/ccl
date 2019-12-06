@@ -3057,7 +3057,7 @@ arg=char : read delimited list"
 
 
 (set-dispatch-macro-character #\# #\P
- (qlfun |#P-reader| (stream char flags &aux (invalid-string "Invalid flags (~S) for pathname ~S"))
+ (nlambda |#P-reader| (stream char flags &aux (invalid-string "Invalid flags (~S) for pathname ~S"))
    (declare (ignore char))
    (when (null flags) (setq flags 0))
    (unless (memq flags '(0 1 2 3 4))

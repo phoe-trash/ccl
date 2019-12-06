@@ -341,7 +341,7 @@
 (macrolet ((%eval-redef (name vars &rest body)
              (when (null body) (setq body `((,name ,@vars))))
              `(setf (symbol-function ',name)
-                    (qlfun ,name ,vars ,@body))))
+                    (nlambda ,name ,vars ,@body))))
   (declare (optimize (speed 1) (safety 1)))
   (%eval-redef %ilsl (n x))
   (%eval-redef %ilsr (n x))

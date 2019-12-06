@@ -1540,18 +1540,18 @@ printed using \"#:\" syntax.  NIL means no prefix is printed.")
            (pp-end-block stream #\))))))
 
 (%fhave 'encapsulated-function-name ;(fn) ;Redefined in encapsulate
-        (qlfun bootstrapping-encapsulated-function-name (fn)
+        (nlambda bootstrapping-encapsulated-function-name (fn)
           (declare (ignore fn))
           nil))
 
 
 (%fhave '%traced-p ;(fn) ;Redefined in encapsulate
-        (qlfun bootstrapping-%traced-p (fn)
+        (nlambda bootstrapping-%traced-p (fn)
           (declare (ignore fn))
           nil))
 
 (%fhave '%advised-p ;(fn) ;Redefined in encapsulate
-        (qlfun bootstrapping-%advised-p (fn)
+        (nlambda bootstrapping-%advised-p (fn)
           (declare (ignore fn))
           nil))
 

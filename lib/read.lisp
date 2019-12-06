@@ -42,7 +42,7 @@
 |#
 
 (set-dispatch-macro-character #\# #\*
- (qlfun |#*-reader| (input-stream sub-char int 
+ (nlambda |#*-reader| (input-stream sub-char int 
    &aux list list-length array array-length last-bit)
   (declare (ignore sub-char))
   (do* ((char (read-char input-stream nil nil t)
@@ -78,7 +78,7 @@
            array))))
 
 (set-dispatch-macro-character #\# #\A
- (qlfun |#A-reader| (stream ignore dimensions)
+ (nlambda |#A-reader| (stream ignore dimensions)
    (declare (ignore ignore))
    (cond (*read-suppress*
           (read stream () () t)
@@ -108,7 +108,7 @@
          (t (signal-reader-error stream "Dimensions argument to #A not a non-negative integer: ~S" dimensions)))))
 
 (set-dispatch-macro-character #\# #\S
-  (qlfun |#S-reader| (input-stream sub-char int &aux list sd)
+  (nlambda |#S-reader| (input-stream sub-char int &aux list sd)
      (declare (ignore sub-char int))
      (setq list (read-internal input-stream t nil t))
      (unless *read-suppress*

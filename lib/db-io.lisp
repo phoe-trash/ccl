@@ -889,7 +889,7 @@ satisfy the optional predicate PREDICATE."
 
 (set-dispatch-macro-character 
  #\# #\&
- (qlfun |#&-reader| (stream char arg)
+ (nlambda |#&-reader| (stream char arg)
    (declare (ignore char arg))
    (let* ((package (find-package (ftd-interface-package-name *target-ftd*))))
      (multiple-value-bind (sym query source)
@@ -1056,7 +1056,7 @@ satisfy the optional predicate PREDICATE."
 
 (set-dispatch-macro-character 
  #\# #\$
- (qlfun |#$-reader| (stream char arg)
+ (nlambda |#$-reader| (stream char arg)
         (declare (ignore char))
         (let* ((package (find-package (ftd-interface-package-name *target-ftd*))))
           (multiple-value-bind (sym query source)
@@ -1097,7 +1097,7 @@ satisfy the optional predicate PREDICATE."
                        (setq val (logior (ash val 8) (char-code ch)))))))))))))
 
 (set-dispatch-macro-character #\# #\_
-  (qlfun |#_-reader| (stream char arg)
+  (nlambda |#_-reader| (stream char arg)
     (declare (ignore char))
     (unless arg (setq arg 0))
     (multiple-value-bind (sym query source)
@@ -1118,7 +1118,7 @@ satisfy the optional predicate PREDICATE."
 
 (set-dispatch-macro-character
  #\# #\>
- (qlfun |#>-reader| (stream char arg)
+ (nlambda |#>-reader| (stream char arg)
     (declare (ignore char arg))
     (if *read-suppress*
       (progn

@@ -84,16 +84,16 @@
 
 
 (%fhave '%defun-encapsulated-maybe ;Redefined in encapsulate
-        (qlfun bootstrapping-defun-encapsulated (name fn)
+        (nlambda bootstrapping-defun-encapsulated (name fn)
           (declare (ignore name fn))
           nil))
 
 (%fhave 'encapsulated-function-name  ;Redefined in encapsulate - used in l1-io
-        (qlfun bootstrapping-encapsulated-function-name (fn)
+        (nlambda bootstrapping-encapsulated-function-name (fn)
           (declare (ignore fn))
           nil))
 
-(%fhave 'set-function-info (qlfun set-function-info  (name info)
+(%fhave 'set-function-info (nlambda set-function-info  (name info)
                                   (if (typep info 'string)
                                     (set-documentation name 'function info))
                                   name))

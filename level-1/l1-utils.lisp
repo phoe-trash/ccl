@@ -29,11 +29,11 @@
 
 ;;; Kludge for record-source-file bootstrapping
 
-(%fhave 'full-pathname (qlfun bootstrapping-full-pathname (name) name))
+(%fhave 'full-pathname (nlambda bootstrapping-full-pathname (name) name))
 
 
 ; real one is  in setf.lisp
-(%fhave '%setf-method (qlfun bootstripping-setf-fsname (spec)
+(%fhave '%setf-method (nlambda bootstripping-setf-fsname (spec)
                                    spec nil))
 
 (fset 'physical-pathname-p (lambda (file)(declare (ignore file)) nil)) ; redefined later
@@ -41,7 +41,7 @@
 (setq *record-source-file* t)
 
 (fset 'level-1-record-source-file
-      (qlfun level-1-record-source-file (name def-type &optional (source (or *loading-toplevel-location*
+      (nlambda level-1-record-source-file (name def-type &optional (source (or *loading-toplevel-location*
                                                                              *loading-file-source-file*)))
         ;; Level-0 puts stuff on plist of name.  Once we're in level-1, names can
         ;; be more complicated than just a symbol, so just collect all calls until
@@ -512,7 +512,7 @@ vector
 
 ;; Redefined in sysutils.
 (%fhave 'specifier-type-if-known
-        (qlfun bootstrapping-type-specifier-p (name &optional env &key &allow-other-keys)
+        (nlambda bootstrapping-type-specifier-p (name &optional env &key &allow-other-keys)
           (declare (ignore env))
           (memq name *cl-types*)))
 
@@ -698,11 +698,11 @@ vector
 
 ;;;Support the simple case of defsetf.
 (%fhave 'store-setf-method
-        (qlfun bootstrapping-store-setf-method (name fn &optional doc)
+        (nlambda bootstrapping-store-setf-method (name fn &optional doc)
           (declare (ignore doc))
           (put name 'bootstrapping-setf-method (require-type fn 'symbol))))
 (%fhave '%setf-method
-        (qlfun bootstrapping-%setf-method (name)
+        (nlambda bootstrapping-%setf-method (name)
           (get name 'bootstrapping-setf-method)))
 
 
