@@ -190,33 +190,16 @@
                 (incf i2)
                 (incf i3)))))))))
 
-
-          
-          
-
-
-
-
-; shrink-vector is called only in sequences-2. None of the calls depend on
-; the side affect of setting the passed-in symbol to the [possibly new]
-; returned vector
-; Since there hasn't been such a thing as sequences-2 in about 7 years,
-; this is especially puzzling.
-(eval-when (:compile-toplevel :execute :load-toplevel)
-  (defmacro shrink-vector (vector to-size)
-    `(setq ,vector (%shrink-vector ,vector ,to-size)))
-  )
-
-
-; new and faulty def
-(defun %shrink-vector (vector to-size)
+(defun shrink-vector (vector to-size)
   (cond ((eq (length vector) to-size)
          vector)
         ((array-has-fill-pointer-p vector)
+         ;; No fill pointer size checks are made. This means that it is possible
+         ;; for SHRINK-VECTOR to actually grow an array with a fill pointer
+         ;; if a fill pointer greater than the current one is provided.
          (setf (fill-pointer vector) to-size)
          vector)
         (t (subseq vector 0 to-size))))
-
 
 ; this could be put into print-db as it was in ccl-pr-4.2
 ; Or it (and print-db) could just be flushed ... tough one.

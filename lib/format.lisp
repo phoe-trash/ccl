@@ -1289,8 +1289,7 @@ and (nthcdr *format-arguments-variance* *format-arguments*)")
              (get-pushed-string nil
                (let ((string result-string) (size pointer))
                  (setf result-size 0 pointer 0 result-string "")
-                 (ccl::shrink-vector string size)
-                 string)))
+                 (ccl::shrink-vector string size))))
         (%flonum-to-digits
          (lambda (d) (push-char (char digit-characters d)))
          (lambda (k) k)
