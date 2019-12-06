@@ -1610,30 +1610,6 @@ to open."
        ,@decls
        ,@body)))
 
-(defmacro with-self-bound-io-control-vars (&body body)
-  `(let (
-         (*print-array* *print-array*)
-         (*print-base* *print-base*)
-         (*print-case* *print-case*)
-         (*print-circle* *print-circle*)
-         (*print-escape* *print-escape*)
-         (*print-gensym* *print-gensym*)
-         (*print-length* *print-length*)
-         (*print-level* *print-level*)
-         (*print-lines* *print-lines*)
-         (*print-miser-width* *print-miser-width*)
-         (*print-pprint-dispatch* *print-pprint-dispatch*)
-         (*print-pretty* *print-pretty*)
-         (*print-radix* *print-radix*)
-         (*print-readably* *print-readably*)
-         (*print-right-margin* *print-right-margin*)
-         (*read-base* *read-base*)
-         (*read-default-float-format* *read-default-float-format*)
-         (*read-eval* *read-eval*)
-         (*read-suppress* *read-suppress*)
-         (*readtable* *readtable*))
-     ,@body))
-
 (defmacro print-unreadable-object (&environment env (object stream &key type identity) &body forms)
   "Output OBJECT to STREAM with \"#<\" prefix, \">\" suffix, optionally
   with object-type prefix and object-identity suffix, and executing the
