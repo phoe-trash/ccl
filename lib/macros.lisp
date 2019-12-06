@@ -2453,19 +2453,6 @@ the lock held."
   `(with-lock-grabbed (*kernel-exception-lock*)
     ,@body))
 
-
-(defmacro with-lock-grabbed-maybe ((lock &optional
-					 (whostate "Lock"))
-				   &body body)
-  (declare (ignore whostate))
-  (let* ((l (gensym)))
-    `(with-lock-context
-      (let* ((,l ,lock))
-        (when (%try-recursive-lock-object ,l)
-          (unwind-protect
-               (progn ,@body)
-            (%unlock-recursive-lock-object ,l)))))))
-
 (defmacro with-standard-abort-handling (abort-message &body body)
   (let ((stream (gensym)))
     `(restart-case
