@@ -5153,17 +5153,6 @@
       (%ioblock-force-output ioblock nil)
       nil)))
 
-(defmethod maybe-stream-force-output ((stream buffered-output-stream-mixin))
-  (with-stream-ioblock-output-maybe (ioblock stream :speedy t)
-    (%ioblock-force-output ioblock nil)
-    nil))
-
-(defmethod maybe-stream-force-output ((stream basic-output-stream))
-  (let* ((ioblock (basic-stream-ioblock stream)))
-    (with-ioblock-output-locked-maybe (ioblock)
-      (%ioblock-force-output ioblock nil)
-      nil)))
-
 (defmethod stream-finish-output ((stream buffered-output-stream-mixin))
   (with-stream-ioblock-output (ioblock stream :speedy t)
     (%ioblock-force-output ioblock t)

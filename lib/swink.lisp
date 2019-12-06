@@ -152,7 +152,7 @@ corresponding values in the CDR of VALUE."
 	      (without-interrupts 
 		(setq *log-queue* (nconc *log-queue* (list string))))
 	      (let ((stream ccl::*stdout*))
-		(with-lock-grabbed (log-lock "Log Output Lock")
+		(with-lock-grabbed (log-lock)
 		  (let ((*log-queue* (list string)))
 		    (fresh-line stream)
 		    (loop for string = (without-interrupts (pop *log-queue*)) while string

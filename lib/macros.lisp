@@ -2426,28 +2426,6 @@ has immediate effect."
        (macrolet ((,mname () `(%pkg-iter-next ,',state)))
          ,@body))))
 
-(defmacro with-lock-grabbed ((lock &optional
-                                   (whostate "Lock"))
-                             &body body)
-  "Wait until a given lock can be obtained, then evaluate its body with
-the lock held."
-  (declare (ignore whostate))
-  (let* ((locked (gensym))
-         (l (gensym)))
-    `(let ((,locked (make-lock-acquisition))
-           (,l ,lock))
-       (declare (dynamic-extent ,locked))
-       (unwind-protect
-            (progn
-              (%lock-recursive-lock-object ,l ,locked )
-              ,@body)
-         (when (lock-acquisition.status ,locked) (%unlock-recursive-lock-object ,l))))))
-
- 
-(defmacro with-exception-lock (&body body)
-  `(with-lock-grabbed (*kernel-exception-lock*)
-    ,@body))
-
 (defmacro with-standard-abort-handling (abort-message &body body)
   (let ((stream (gensym)))
     `(restart-case
@@ -3121,7 +3099,6 @@ Return the pointer."
 	   (progn ,@body)
 	(%restore-terminal-input ,got-it)))))
 
-
 (defmacro with-process-whostate ((whostate) &body body)
   (let* ((cell (gensym))
          (old (gensym)))
@@ -3132,35 +3109,6 @@ Return the pointer."
              (setf (car ,cell) ,whostate)
              ,@body)
         (setf (car ,cell) ,old)))))
-
-
-(defmacro with-read-lock ((lock) &body body)
-  "Wait until a given lock is available for read-only access, then evaluate
-its body with the lock held."
-  (let* ((locked (gensym))
-         (p (gensym)))
-    `(let* ((,locked (make-lock-acquisition))
-            (,p ,lock))
-       (declare (dynamic-extent ,locked))
-       (unwind-protect
-            (progn
-              (read-lock-rwlock ,p ,locked)
-              ,@body)
-         (when (lock-acquisition.status ,locked) (unlock-rwlock ,p))))))
-
-(defmacro with-write-lock ((lock) &body body)
-  "Wait until the given lock is available for write access, then execute
-its body with the lock held."
-  (let* ((locked (gensym))
-         (p (gensym)))
-    `(let* ((,locked (make-lock-acquisition))
-            (,p ,lock))
-       (declare (dynamic-extent ,locked))
-       (unwind-protect
-            (progn
-              (write-lock-rwlock ,p ,locked)
-              ,@body)
-         (when (lock-acquisition.status ,locked) (unlock-rwlock ,p))))))
 
 (defmacro without-gcing (&body body)
   `(unwind-protect
@@ -3182,8 +3130,6 @@ element-type is numeric."
          (with-macptrs ((,ptr))
            (%vect-data-to-macptr ,v ,ptr)
            ,@body)))))
-      
-
 
 (defmacro with-other-threads-suspended (&body body)
   `(unwind-protect
@@ -3191,24 +3137,6 @@ element-type is numeric."
       (%suspend-other-threads)
       ,@body)
     (%resume-other-threads)))
-
-(defmacro with-package-read-lock ((p) &body body)
-  `(with-read-lock ((pkg.lock ,p)) ,@body))
-
-(defmacro with-package-write-lock ((p) &body body)
-  `(with-write-lock ((pkg.lock ,p)) ,@body))
-
-(defmacro with-package-lock ((p) &body body)
-  `(with-package-write-lock (,p) ,@body))
-
-;;; Lock %all-packages-lock%, for shared read access to %all-packages%
-
-(defmacro with-package-list-read-lock (&body body)
-  `(with-read-lock (%all-packages-lock%) ,@body))
-
-;;; Lock %all-packages-lock%, to allow modification to %all-packages%
-(defmacro with-package-list-write-lock (&body body)
-  `(with-write-lock (%all-packages-lock%) ,@body))
 
 (defmacro atomic-incf-decf (place delta &environment env)
   (setq place (macroexpand place env))
@@ -3542,85 +3470,6 @@ to be at least partially steppable."
            (return))
          ,@body))))
 
-(defmacro with-ioblock-input-lock-grabbed ((ioblock) &body body)
-  (let* ((i (gensym)))
-    `(let* ((,i ,ioblock))
-      (with-lock-grabbed ((ioblock-inbuf-lock ,i))
-        (cond ((ioblock-device ,i)
-               ,@body)
-              (t (stream-is-closed (ioblock-stream ,i))))))))
-
-(defmacro with-ioblock-output-lock-grabbed ((ioblock) &body body)
-  (let* ((i (gensym)))
-    `(let* ((,i ,ioblock))
-      (with-lock-grabbed ((ioblock-outbuf-lock ,i))
-        (cond ((ioblock-device ,i)
-               ,@body)
-              (t (stream-is-closed (ioblock-stream ,i))))))))
-  
-
-(defmacro with-stream-ioblock-input ((ioblock stream &key
-                                             speedy)
-                                  &body body)
-  `(let ((,ioblock (stream-ioblock ,stream t)))
-     ,@(when speedy `((declare (optimize (speed 3) (safety 0)))))
-     (with-ioblock-input-locked (,ioblock) ,@body)))
-
-(defmacro with-stream-ioblock-output ((ioblock stream &key
-                                             speedy)
-                                  &body body)
-  `(let ((,ioblock (stream-ioblock ,stream t)))
-     ,@(when speedy `((declare (optimize (speed 3) (safety 0)))))
-     (with-ioblock-output-locked (,ioblock) ,@body)))
-
-(defmacro with-stream-ioblock-output-maybe ((ioblock stream &key
-						     speedy)
-					    &body body)
-  `(let ((,ioblock (stream-ioblock ,stream t)))
-    ,@(when speedy `((declare (optimize (speed 3) (safety 0)))))
-    (with-ioblock-output-locked-maybe (,ioblock) ,@body)))
-
-(defmacro with-ioblock-input-locked ((ioblock) &body body)
-  (let* ((lock (gensym)))
-    `(let* ((,lock (locally (declare (optimize (speed 3) (safety 0)))
-                                  (ioblock-inbuf-lock ,ioblock))))
-      (if ,lock
-        (with-lock-grabbed (,lock)
-          (cond ((ioblock-device ,ioblock)
-                 ,@body)
-                (t (stream-is-closed (ioblock-stream ,ioblock)))))
-        (progn
-          (check-ioblock-owner ,ioblock)
-          ,@body)))))
-
-(defmacro with-ioblock-output-locked ((ioblock) &body body)
-  (let* ((lock (gensym)))
-    `(let* ((,lock (locally (declare (optimize (speed 3) (safety 0)))
-                                  (ioblock-outbuf-lock ,ioblock))))
-      (if ,lock
-        (with-lock-grabbed (,lock)
-          (cond ((ioblock-device ,ioblock)
-                 ,@body)
-                (t (stream-is-closed (ioblock-stream ,ioblock)))))
-        (progn
-          (check-ioblock-owner ,ioblock)
-          ,@body)))))
-
-
-
-(defmacro with-ioblock-output-locked-maybe ((ioblock) &body body)
-  (let* ((lock (gensym)))
-    `(let* ((,lock (locally (declare (optimize (speed 3) (safety 0)))
-                     (ioblock-outbuf-lock ,ioblock))))
-      (if ,lock
-        (with-lock-grabbed (,lock)
-          (cond ((ioblock-device ,ioblock)
-                 ,@body)
-                (t (stream-is-closed (ioblock-stream ,ioblock)))))
-        (progn
-          (check-ioblock-owner ,ioblock)
-          ,@body)))))
-
 ;;; Use this when it's possible that the fd might be in
 ;;; a non-blocking state.  Body must return a negative of
 ;;; the os error number on failure.
@@ -3773,3 +3622,79 @@ stream-output-timeout set to TIMEOUT."
         ,(nx-lookup-target-uvector-subtag :min-cl-ivector-subtag))
        (>= (the (unsigned-byte 8) (gvector-typecode-p ,typecode))
            ,(nx-lookup-target-uvector-subtag :array-header))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Lock-related macros
+
+(flet ((%with-lock (lock-fn unlock-fn lock body)
+         (let* ((locked (gensym))
+                (l (gensym)))
+           `(let ((,locked (make-lock-acquisition))
+                  (,l ,lock))
+              (declare (dynamic-extent ,locked))
+              (unwind-protect (progn (,lock-fn ,l ,locked) ,@body)
+                (when (lock-acquisition.status ,locked) (,unlock-fn ,l)))))))
+  (defmacro with-lock-grabbed ((lock) &body body)
+    "Wait until a given lock can be obtained, then evaluate its body with
+the lock held."
+    (%with-lock '%lock-recursive-lock-object '%unlock-recursive-lock-object lock body))
+  (defmacro with-read-lock ((lock) &body body)
+    "Wait until a given lock is available for read-only access, then evaluate
+its body with the lock held."
+    (%with-lock 'read-lock-rwlock 'unlock-rwlock lock body))
+  (defmacro with-write-lock ((lock) &body body)
+    "Wait until the given lock is available for write access, then execute
+its body with the lock held."
+    (%with-lock 'write-lock-rwlock 'unlock-rwlock lock body)))
+
+(flet ((%with-ioblock-lock-grabbed (accessor ioblock body)
+         (let ((i (gensym)))
+           `(let ((,i ,ioblock))
+              (with-lock-grabbed ((,accessor ,i))
+                (if (ioblock-device ,i)
+                  (progn ,@body)
+                  (stream-is-closed (ioblock-stream ,i))))))))
+  (defmacro with-ioblock-input-lock-grabbed ((ioblock) &body body)
+    (%with-ioblock-lock-grabbed 'ioblock-inbuf-lock ioblock body))
+  (defmacro with-ioblock-output-lock-grabbed ((ioblock) &body body)
+    (%with-ioblock-lock-grabbed 'ioblock-outbuf-lock ioblock body)))
+
+(flet ((%with-stream-ioblock (macro-name ioblock stream speedy body)
+         `(let ((,ioblock (stream-ioblock ,stream t)))
+            ,@(when speedy `((declare (optimize (speed 3) (safety 0)))))
+            (,macro-name (,ioblock) ,@body))))
+  (defmacro with-stream-ioblock-input ((ioblock stream &key speedy) &body body)
+    (%with-stream-ioblock 'with-ioblock-input-locked ioblock stream speedy body))
+  (defmacro with-stream-ioblock-output ((ioblock stream &key speedy) &body body)
+    (%with-stream-ioblock 'with-ioblock-output-locked ioblock stream speedy body)))
+
+(flet ((%with-ioblock-locked (accessor ioblock body)
+         (let* ((lock (gensym)))
+           `(let* ((,lock (locally (declare (optimize (speed 3) (safety 0)))
+                            (,accessor ,ioblock))))
+              (if ,lock
+                (with-lock-grabbed (,lock)
+                  (if (ioblock-device ,ioblock)
+                    (progn ,@body)
+                    (stream-is-closed (ioblock-stream ,ioblock))))
+                (progn (check-ioblock-owner ,ioblock) ,@body))))))
+  (defmacro with-ioblock-input-locked ((ioblock) &body body)
+    (%with-ioblock-locked 'ioblock-inbuf-lock ioblock body))
+  (defmacro with-ioblock-output-locked ((ioblock) &body body)
+    (%with-ioblock-locked 'ioblock-outbuf-lock ioblock body)))
+
+(flet ((%with-package-list-lock (macro-name body)
+         `(,macro-name (%all-packages-lock%) ,@body)))
+  (defmacro with-package-list-read-lock (&body body)
+    ;; Lock %all-packages-lock%, for shared read access to %all-packages%
+    (%with-package-list-lock 'with-read-lock body))
+  (defmacro with-package-list-write-lock (&body body)
+    ;; Lock %all-packages-lock%, to allow modification to %all-packages%
+    (%with-package-list-lock 'with-write-lock body)))
+
+(defmacro with-exception-lock (&body body)
+  `(with-lock-grabbed (*kernel-exception-lock*)
+     ,@body))
+
+(defmacro with-package-lock ((p) &body body)
+  `(with-write-lock ((pkg.lock ,p)) ,@body))
