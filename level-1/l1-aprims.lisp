@@ -3612,38 +3612,6 @@ are rounded up to a multiple of 64Kbytes."
          (setf ,place ,cdr)
          (free-cons ,list)))))
 
-;;; Support for defresource & using-resource macros
-(defun make-resource (constructor &key destructor initializer)
-  (%cons-resource constructor destructor initializer))
-
-(defun allocate-resource (resource)
-  (setq resource (require-type resource 'resource))
-  (with-lock-grabbed ((resource.lock resource))
-    (let ((pool (resource.pool resource))
-          res)
-      (let ((data (pool.data pool)))
-        (when data
-          (setf res (car data)
-                (pool.data pool) (cdr (the cons data)))
-          (free-cons data)))
-      (if res
-        (let ((initializer (resource.initializer resource)))
-          (when initializer
-            (funcall initializer res)))
-        (setq res (funcall (resource.constructor resource))))
-      res)))
-
-(defun free-resource (resource instance)
-  (setq resource (require-type resource 'resource))
-  (with-lock-grabbed ((resource.lock resource))
-    (let ((pool (resource.pool resource))
-          (destructor (resource.destructor resource)))
-      (when destructor
-        (funcall destructor instance))
-      (setf (pool.data pool)
-            (cheap-cons instance (pool.data pool)))))
-  resource)
-
 (defun valid-char-code-p (code)
   (and (typep code 'fixnum)
        (locally (declare (fixnum code))

@@ -2426,25 +2426,6 @@ has immediate effect."
        (macrolet ((,mname () `(%pkg-iter-next ,',state)))
          ,@body))))
 
-; Does NOT evaluate the constructor, but DOES evaluate the destructor & initializer
-(defmacro defresource (name &key constructor destructor initializer)
-  `(defparameter ,name (make-resource #'(lambda () ,constructor)
-                                      ,@(when destructor
-                                          `(:destructor ,destructor))
-                                      ,@(when initializer
-                                          `(:initializer ,initializer)))))
-
-(defmacro using-resource ((var resource) &body body)
-  (let ((resource-var (gensym)))
-  `(let ((,resource-var ,resource)
-         ,var)
-     (unwind-protect
-       (progn
-         (setq ,var (allocate-resource ,resource-var))
-         ,@body)
-       (when ,var
-         (free-resource ,resource-var ,var))))))
-
 ;;; Bind per-thread specials which help with lock accounting.
 (defmacro with-lock-context (&body body)
   `(progn ,@body))
