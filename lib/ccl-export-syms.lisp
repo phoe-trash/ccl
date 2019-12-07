@@ -765,6 +765,7 @@
      package-locally-nicknamed-by-list
      add-package-local-nickname
      remove-package-local-nickname
+     get-errno
      ) "CCL"
    )
   )
