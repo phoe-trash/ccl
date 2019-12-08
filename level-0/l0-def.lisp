@@ -221,8 +221,6 @@
          (not (lfunp #-arm-target (svref def 1)
                      #+arm-target (uvref def 2))))))
 
-(defun special-form-p (x) (special-operator-p x))
-
 (defun setf-function-name-p (thing)
   (and (consp thing)
        (consp (%cdr thing))

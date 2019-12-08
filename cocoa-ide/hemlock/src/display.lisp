@@ -227,7 +227,7 @@
 (defun compute-symbol-category (start-mark sym)
   (when (ccl::non-nil-symbol-p sym)
     (cond ((and (or (macro-function sym)
-                    (ccl::special-form-p sym))
+                    (special-operator-p sym))
                 (mark-at-invocation-p start-mark))
            :system-symbol)
           ((keywordp sym)
