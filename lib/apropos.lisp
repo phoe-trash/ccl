@@ -14,237 +14,109 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-;; Apropos.lisp
-
 (in-package "CCL")
 
 (eval-when (:execute :compile-toplevel)
-   (require :level-2)
-   )
+   (require :level-2))
 
-(defun apropos-list (string &optional package &aux list)
+;;; APROPOS-LIST
+
+(defun apropos-list (string &optional package)
   "Like APROPOS, except that it returns a list of the symbols found instead
   of describing them."
-  (setq string (string-arg string))
-  (if package
-    (do-symbols (sym package)
-      (when (%apropos-substring-p string (symbol-name sym))
-        (push sym list)))
-    (do-all-symbols (sym)
-      (when (%apropos-substring-p string (symbol-name sym))
-        (push sym list))))
-  (let* ((last 0)                      ; not a symbol
-         (junk #'(lambda (item)
-                   (declare (debugging-function-name nil))
-                   (or (eq item last) (progn (setq last item) nil)))))
-    (declare (dynamic-extent junk))
-    (setq list (delete-if junk (sort list #'string-lessp))))
-  list)
+  (require-type string '(or symbol string character))
+  (require-type package '(or null package symbol string character))
+  (let ((result '()))
+    (flet ((maybe-collect (symbol)
+             (when (search (string string) (symbol-name symbol) :test #'char-equal)
+               (pushnew symbol result))))
+      (if package
+        (do-symbols (symbol package) (maybe-collect symbol))
+        (do-all-symbols (symbol) (maybe-collect symbol))))
+    (sort result #'string-lessp)))
 
-(defvar *apropos-indent-to-search-string* nil)
-(defun apropos-list-aux (theString package indent-to-search-string &aux theList)
-    (setq theString (string-arg theString))
-    (if package
-      (do-symbols (sym package)
-        (when (%apropos-substring-p theString (symbol-name sym))
-          (pushnew sym theList)))
-      (do-all-symbols (sym)
-        (when (%apropos-substring-p theString (symbol-name sym))
-          (pushnew sym theList))))
-    (let* ((last 0)                      ; not a symbol
-           (junk #'(lambda (item)
-                     (declare (debugging-function-name nil))
-                     (or (eq item last) (progn (setq last item) nil)))))
-      (declare (dynamic-extent junk))
-      (sort-symbol-list (delete-if junk theList) (if indent-to-search-string
-                                                   theString
-                                                   nil))))
-  
-(defun apropos-string-indented (symTuple indent)
-    (let ((pr-string     (prin1-to-string (aref symTuple 0)))
-          (displayOffset (aref symTuple 3)))
-      (format nil "~v@a~a"
-              indent
-              (subseq pr-string 0 displayOffset)
-              (subseq pr-string displayOffset))))
-  
+;;; DEFINE-APROPOS-NAMESPACE
 
-(defun apropos-aux (theString symtuple indent)
-  (declare (ignore theString))
-  (let ((sym (aref symtuple 0))
-        val)
-    (format t "~a" (apropos-string-indented symtuple indent))
-    (when (setq val (fboundp sym))
-      (cond ((functionp val)
-             (princ ", Def: ")
-             (prin1 (type-of val)))
-            ((setq val (macro-function sym))
-             (princ ", Def: MACRO ")
-             (prin1 (type-of val)))
-            (t (princ ", Special form"))))
-    (when (boundp sym)
-      (princ ",  Value: ")
-      (prin1 (symbol-value sym)))
-    (when (find-class sym nil)
-      (princ ", Class: ")
-      (prin1 (find-class sym)))
-    (terpri)))
+(defvar *apropos-namespaces* (make-hash-table)
+  "The table of all namespaces known to APROPOS. Each key is a keyword that is meant
+for uniquely representing the namespace and each value is a list of a user-friendly
+name of the namespace that is printed by APROPOS, and a predicate that accepts a
+symbol and returns true if the symbol is bound to that definition.
+\
+Programmers may add new forms to this table to have APROPOS recognize their custom
+definitions.")
 
-  
-(defun apropos (theString &optional package)
-    (multiple-value-bind (symVector indent) (apropos-list-aux theString package *apropos-indent-to-search-string*)
-      (loop for symtuple across symVector
-        do (apropos-aux theString symtuple indent))
-      (values)))
-  
-#|
+(defmacro define-apropos-namespace (name (arg &optional keyword) &body body)
+  "Defines a new namespace for use in APROPOS. ARG and BODY are the argument and
+function body of the predicate that tests whether a given symbol names an object
+in the target namespace; NAME is a string that is printed in the output of APROPOS
+The KEYWORD argument is used for identifying the namespace in the system and is
+automatically derived from the name if not provided."
+  (require-type name 'string)
+  (require-type keyword '(or null keyword))
+  (unless keyword
+    (setf keyword (make-keyword (string-upcase (substitute #\- #\Space name)))))
+  `(setf (gethash ,keyword *apropos-namespaces*)
+         (list ,name (nfunction ,(format nil "Apropos predicate for ~A" name)
+                                (lambda (,arg) ,@body)))))
+
+;;; APROPOS
+
 (defun apropos (string &optional package)
-  "Briefly describe all symbols which contain the specified STRING.
-  If PACKAGE is supplied then only describe symbols present in
-  that package. If EXTERNAL-ONLY then only describe
-  external symbols in the specified package."
-  (setq string (string-arg string))
-  (if package
-    (do-symbols (sym package) (apropos-aux string sym))
-    (do-all-symbols (sym) (apropos-aux string sym)))
+  "Briefly describe all symbols which contain the specified STRING. If PACKAGE
+is supplied then only describe symbols present in that package. If
+EXTERNAL-ONLY then only describe external symbols in the specified package."
+  (let ((symbols (apropos-list string package)))
+    (map nil #'apropos-print symbols))
   (values))
 
-(defun apropos-aux (string sym &aux val)
-  (when (%apropos-substring-p string (symbol-name sym))
-    (prin1 sym)
-    (when (setq val (fboundp sym))
-      (cond ((functionp val)
-             (princ ", Def: ")
-             (prin1 (type-of val)))
-            ((setq val (macro-function sym))
-             (princ ", Def: MACRO ")
-             (prin1 (type-of val)))
-            (t (princ ", Special form"))))
-    (when (boundp sym)
-       (princ ",  Value: ")
-       (prin1 (symbol-value sym)))
-    (terpri)))
-|#
+(defun apropos-print (symbol)
+  (loop for keyword being the hash-key of *apropos-namespaces*
+        for (name predicate) = (gethash keyword *apropos-namespaces*)
+        when (funcall predicate symbol)
+          collect name into result
+        finally (format t "~S ~@[(~{~A~^, ~})~]~%" symbol result)))
 
-; (%apropos-substring-p a b)
-; Returns true iff a is a substring (case-sensitive) of b.
-; Internal subroutine of apropos, does no type-checking.  Assumes strings no
-; longer than 64K...
+;;; Standard APROPOS definitions
 
+(define-apropos-namespace "function" (x)
+  (and (fboundp x)
+       (not (macro-function x))
+       (not (special-operator-p x))))
 
+(define-apropos-namespace "compiler macro" (x)
+  (and (fboundp x)
+       (compiler-macro-function x)))
 
+(define-apropos-namespace "macro" (x)
+  (and (fboundp x)
+       (macro-function x)
+       (not (special-operator-p x))))
 
-(defun %apropos-substring-p (a b)
-  (let ((charA0 (%schar a 0))
-        (alen (length a))
-        (blen (length b)))
-    (declare (fixnum alen blen) (optimize (speed 3)(safety 0)))
-    (if (= alen 0)  ; "" is substring of every string
-        t
-        (if *apropos-case-sensitive-p*
-            (dotimes (i (the fixnum (%imin blen (%i+ 1 (%i- blen alen)))))
-              (declare (fixnum i))
-              (when (eq (%schar b i) chara0)
-                (when
-                    (do ((j 1 (1+ j)))
-                        ((>= j alen) t)
-                      (declare (fixnum j))
-                      (when (neq (%schar a j)(%schar b (%i+ j i)))
-                        (return nil)))
-                  (return  (%i- blen i alen)))))
-            (dotimes (i (the fixnum (%imin blen (%i+ 1 (%i- blen alen)))))
-              (declare (fixnum i))
-              (when (eq (char-upcase (%schar b i)) (char-upcase chara0))
-                (when
-                    (do ((j 1 (1+ j)))
-                        ((>= j alen) t)
-                      (declare (fixnum j))
-                      (unless (eq (char-upcase (%schar a j)) (char-upcase (%schar b (%i+ j i))))
-                        (return nil)))
-                  (return  (%i- blen i alen)))))))))
+(define-apropos-namespace "special form" (x)
+  (and (fboundp x)
+       (special-operator-p x)))
 
+(define-apropos-namespace "keyword" (x)
+  (keywordp x))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; from Dave Yost
-(defun find-sym-alpha-part (sym)
-  (let* ((str (prin1-to-string sym))
-         (sortOffset (let ((sym-start (if (find #\: str)
-                                      (loop for ind from (1- (length str)) downto 0
-                                            when (eql #\: (char str ind))
-                                            return (1+ ind))
-                                      0)))
-                     (+ sym-start (find-alpha-char (subseq str sym-start))))))
-    (values str sortOffset sortOffset)))
+(define-apropos-namespace "constant variable" (x)
+  (and (constant-symbol-p x)
+       (not (keywordp x))))
 
-(defun find-str-in-sym (str sym)
-  (let* ((symStr (string-arg (prin1-to-string sym)))
-         (sortOffset (let ((sym-start (if (find #\: str)
-                                      (loop for ind from (1- (length str)) downto 0
-                                            when (eql #\: (char str ind))
-                                            return (1+ ind))
-                                      0)))
-                     (+ sym-start (find-alpha-char (subseq str sym-start)))))
-         (displayOffset (let ((sym-start (if (find #\: symStr)
-                                       (or (loop for ind from (1- (length symStr)) downto 0
-                                             when (eql #\| (schar symStr ind))
-                                             do (setf ind (loop for ind2 from (1- ind) downto 0
-                                                                when (eql #\| (schar symStr ind2))
-                                                                return ind2))
-                                             when (eql #\: (char symStr ind))
-                                             return (1+ ind))
-                                           0)
-                                       0)))
-                      (+ sym-start (search (string-upcase str) (string-upcase (subseq symStr sym-start)))))))
-    (values symStr sortOffset displayOffset)))
+(define-apropos-namespace "static variable" (x)
+  (and (static-variable-p x)
+       (not (constant-symbol-p x))))
 
-(defun find-alpha-char (str)
-  "returns the character position of the first
-alphabetic character in str, or the length of str
-if it contains no alphabetic characters."
-  (setq str (string-arg str))
-  (dotimes (ind (length str)  ind)
-    (when (alpha-char-p (schar str ind))
-       (return ind))))
+(define-apropos-namespace "dynamic variable" (x)
+  (and (boundp x)
+       (not (static-variable-p x))
+       (not (constant-symbol-p x))))
 
-(defun sort-symbol-list (theList search-string)
-  ;;; First precompute the stylized string form of the symbols as they will be compared
-  ;;; and calculate the maximum indent
-  (multiple-value-bind (tmpVector indentation)
-      (let (sortOffset
-            displayOffset
-            str)
-        (loop for x in thelist do
-              (multiple-value-setq (str sortOffset displayOffset)
-                (if search-string
-                  (find-str-in-sym search-string x)
-                  (find-sym-alpha-part           x)))
-                           
-                           
-              maximize displayOffset into indentation1
-              collect `#(,x ,(string-arg (subseq str sortOffset)) ,sortOffset ,displayOffset) into tmpList1
-              finally  (return (values `#(,@tmpList1) indentation1))))
-    (setq TMPVECTor (sort tmpVector #'(lambda (symPair1 symPair2)
-                                         (string-lessp (aref symPair1 1) (aref symPair2 1)))))
-    (values tmpVector ; each element is a vector of `#(,sym sortable-string-for-sym)
-            indentation)))
+(define-apropos-namespace "condition" (x)
+  (and (find-class x nil)
+       (subtypep (find-class x) (find-class 'condition))))
 
-
-#|
-(defun %apropos-substring-p (a b &aux (alen (length a))
-                                     (xlen (%i- (length b) alen)))
-  (if (%iminusp xlen) nil
-    (if (eq alen 0) alen
-      (let ((a0 (schar a 0)) (i 0) j)
-        (tagbody loop
-          (when (eq (schar b i) a0)
-            (setq j 1)
-            (tagbody subloop
-              (when (eq j alen) (return-from %apropos-substring-p i))
-              (when (eq (schar b (%i+ i j)) (schar a j))
-                 (setq j (%i+ j 1))
-                 (go subloop))))
-          (unless (eq i xlen)
-            (setq i (%i+ i 1))
-            (go loop)))
-        nil))))
-|#
+(define-apropos-namespace "class" (x)
+  (and (find-class x nil)
+       (not (subtypep (find-class x) (find-class 'condition)))))

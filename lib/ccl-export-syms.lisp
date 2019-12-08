@@ -767,6 +767,9 @@
      add-package-local-nickname
      remove-package-local-nickname
      get-errno
+     ;; New APROPOS
+     *apropos-namespaces*
+     define-apropos-namespace
      ) "CCL"
    )
   )

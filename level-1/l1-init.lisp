@@ -295,7 +295,6 @@ for compiling files that are not expected to change.")
 (defvar *listener-indent* nil)
 
 (defparameter *autoload-lisp-package* nil)   ; Make 'em suffer
-(defparameter *apropos-case-sensitive-p* nil)
 
 (defloadvar *total-gc-microseconds* (let* ((timeval-size
                                             #.(%foreign-type-or-record-size
