@@ -113,11 +113,6 @@
                                  (lambda (thing type)
                                    (declare (ignore type))
                                    thing)))
-(%fhave '%require-type 
-        (nfunction bootstrapping-%require-type
-                   (lambda (thing predicate)
-                     (declare (ignore predicate))
-                     thing)))
 
 (setf (type-predicate 'macptr) 'macptrp)
 

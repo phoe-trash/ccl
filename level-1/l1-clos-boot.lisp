@@ -1263,16 +1263,6 @@ Generic-function's   : ~s~%" method (or (generic-function-name gf) gf) (flatten-
 
 (%fhave 'std-instance-class-cell-typep #'class-cell-typep)
 
-
-
-(defun %require-type-class-cell (arg class-cell)
-  (if (class-cell-typep arg class-cell)
-    arg
-    (%kernel-restart $xwrongtype arg (class-cell-class class-cell))))
-
-
-
-
 (defun find-class (name &optional (errorp t) environment)
   (declare (optimize speed))
   (let* ((cell (find-class-cell name nil)))

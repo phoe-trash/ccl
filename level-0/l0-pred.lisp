@@ -40,14 +40,6 @@
         (if  (fboundp 'find-class)
           (find-class (class-cell-name class-cell) nil)))))
 
-(defun %require-type-builtin (form foo)
-  (declare (ignore foo))
-  form)
-
-(defun %require-type-class-cell (form cell)
-  (declare (ignore cell))
-  form)
-  
 (defun non-nil-symbol-p (x)
   (if (symbolp x) x))
 
