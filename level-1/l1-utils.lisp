@@ -424,7 +424,7 @@
                       "Constant ~S is already defined with a different value (~s)"
                       var old-value value))))))
     (%symbol-bits var 
-                  (%ilogior (%ilsl $sym_bit_special 1) (%ilsl $sym_bit_const 1)
+                  (%ilogior (%ilsl $sym_vbit_special 1) (%ilsl $sym_vbit_const 1)
                             (%symbol-bits var)))
     (%set-sym-global-value var value))
   var)

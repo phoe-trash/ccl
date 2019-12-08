@@ -179,7 +179,7 @@
              MOST-POSITIVE-SINGLE-FLOAT MULTIPLE-VALUES-LIMIT PI
              SHORT-FLOAT-EPSILON SHORT-FLOAT-NEGATIVE-EPSILON
              SINGLE-FLOAT-EPSILON SINGLE-FLOAT-NEGATIVE-EPSILON))
-  (%symbol-bits x (%ilogior2 (%symbol-bits x) (ash 1 $sym_bit_special))))
+  (%symbol-bits x (%ilogior2 (%symbol-bits x) (ash 1 $sym_vbit_special))))
 
 (defparameter *loading-file-source-file* nil)
 (defparameter *loading-toplevel-location* nil)

@@ -398,8 +398,6 @@ $1 = ($2<<num_subtag_bits)|$3')
 	include(errors.s)
 
 /* Symbol bits that we care about */
-sym_vbit_bound = (0+fixnum_shift)
-sym_vbit_bound_mask = (1<<sym_vbit_bound)
 sym_vbit_const = (1+fixnum_shift)
 sym_vbit_const_mask = (1<<sym_vbit_const)
 

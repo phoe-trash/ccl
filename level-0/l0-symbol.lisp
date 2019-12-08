@@ -128,7 +128,7 @@
            (constant-symbol-p sym))
     (cerror "Make ~S be unbound anyway."
             "~S is a constant; making it unbound might be a bad idea." sym))
-  (%symbol-bits sym (the fixnum (logand (logior #xff00 (ash 1 $sym_bit_special))
+  (%symbol-bits sym (the fixnum (logand (logior #xff00 (ash 1 $sym_vbit_special))
                                         (the fixnum (%symbol-bits sym)))))
   (%set-sym-value sym (%unbound-marker))
   sym)

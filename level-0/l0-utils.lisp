@@ -22,7 +22,7 @@
 (in-package "CCL")
 
 (defun %proclaim-notspecial (sym)
-  (%symbol-bits sym (logandc2 (%symbol-bits sym) (ash 1 $sym_bit_special))))
+  (%symbol-bits sym (logandc2 (%symbol-bits sym) (ash 1 $sym_vbit_special))))
 
 
 (defun heap-area-name (code)

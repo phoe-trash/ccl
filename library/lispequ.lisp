@@ -96,28 +96,14 @@
 
 ;;; Symbol [f,v]bits.
 
-(defconstant $sym_bit_bound 0)		;Proclaimed bound.
-(defconstant $sym_bit_const 1)
-(defconstant $sym_bit_global 2)         ;Should never be lambda-bound.
-(defconstant $sym_bit_special 4)
+(defconstant $sym_vbit_const 1)
+(defconstant $sym_vbit_global 2) ;Should never be lambda-bound.
+(defconstant $sym_vbit_special 4)
 (defconstant $sym_vbit_typeppred 5)
-(defconstant $sym_bit_indirect 6)
-(defconstant $sym_bit_defunct 7)
 
-(defconstant $sym_vbit_bound $sym_bit_bound)
-(defconstant $sym_vbit_const $sym_bit_const)
-(defconstant $sym_vbit_global $sym_bit_global)
-(defconstant $sym_vbit_special $sym_bit_special)
-(defconstant $sym_vbit_indirect $sym_bit_indirect)
-(defconstant $sym_vbit_defunct $sym_bit_defunct)
-
-(defconstant $sym_fbit_frozen (+ 8 $sym_bit_bound))
-(defconstant $sym_fbit_special (+ 8 $sym_bit_special))
-(defconstant $sym_fbit_indirect (+ 8 $sym_bit_indirect))
-(defconstant $sym_fbit_defunct (+ 8 $sym_bit_defunct))
-
-(defconstant $sym_fbit_constant_fold (+ 8 $sym_bit_const))
-(defconstant $sym_fbit_fold_subforms (+ 8 $sym_bit_global))
+(defconstant $sym_fbit_frozen 8)
+(defconstant $sym_fbit_constant_fold 9)
+(defconstant $sym_fbit_fold_subforms 10)
 
 
 
