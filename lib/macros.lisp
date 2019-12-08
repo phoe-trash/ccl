@@ -785,6 +785,10 @@ form is not evaluated if the variable is already BOUNDP."
       (%symbol-bits ',var (logior (ash 1 $sym_vbit_global) (the fixnum (%symbol-bits ',var))))
      (%defvar-init ,var ,value ,doc)))
 
+(defun static-variable-p (symbol)
+  "Returns true if the variable was defined "
+  (let ((bits (%svref (symptr->symvector (%symbol->symptr symbol)) target::symbol.flags-cell)))
+    (= 1 (ldb (byte 1 $sym_vbit_global) bits))))
 
 (defmacro defglobal (&rest args)
   "Synonym for DEFSTATIC."

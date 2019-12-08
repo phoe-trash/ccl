@@ -34,6 +34,7 @@
      defloadvar
      defstatic
      defstaticvar
+     static-variable-p
      *break-on-warnings*
      ;; misc
      record-source-file
