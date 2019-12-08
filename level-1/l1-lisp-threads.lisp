@@ -772,42 +772,6 @@
 (defun %value-cell-header-at-p (cur-vsp)
   (eql target::value-cell-header (%fixnum-address-of (%fixnum-ref cur-vsp))))
 
-(defun count-stack-consed-value-cells-in-frame (vsp parent-vsp)
-  (let ((cur-vsp vsp)
-        (count 0))
-    (declare (fixnum cur-vsp count))
-    (loop
-      (when (>= cur-vsp parent-vsp) (return))
-      (when (and (evenp cur-vsp) (%value-cell-header-at-p cur-vsp))
-        (incf count)
-        (incf cur-vsp))                 ; don't need to check value after header
-      (incf cur-vsp))
-    count))
-
-;;; stack consed value cells are one of two forms:
-;;; Well, they were of two forms.  When they existed, that is.
-;;;
-;;; nil             ; n-4
-;;; header          ; n = even address (multiple of 8)
-;;; value           ; n+4
-;;;
-;;; header          ; n = even address (multiple of 8)
-;;; value           ; n+4
-;;; nil             ; n+8
-
-(defun in-stack-consed-value-cell-p (arg-vsp vsp parent-vsp)
-  (declare (fixnum arg-vsp vsp parent-vsp))
-  (if (evenp arg-vsp)
-    (%value-cell-header-at-p arg-vsp)
-    (or (and (> arg-vsp vsp)
-             (%value-cell-header-at-p (the fixnum (1- arg-vsp))))
-        (let ((next-vsp (1+ arg-vsp)))
-          (declare (fixnum next-vsp))
-          (and (< next-vsp parent-vsp)
-               (%value-cell-header-at-p next-vsp))))))
-
-
-
 (defun count-values-in-frame (p context &optional child)
   (declare (ignore child))
   (multiple-value-bind (vsp parent-vsp) (vsp-limits p context)
