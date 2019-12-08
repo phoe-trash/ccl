@@ -75,22 +75,8 @@
           (aref pc-source-map best-guess)
           (aref pc-source-map (+ best-guess 1)))))))
 
-;;; Lambda-list utilities
-
-
-
-
-
-;;; Lambda-list verification:
-
 ;;; these things MUST be compiled.
 (eval-when (:load-toplevel)
-
-(defvar *structured-lambda-list* nil)
-
-
-
-
 (defun parse-body (body env &optional (doc-string-allowed t) &aux
    decls
    doc

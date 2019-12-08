@@ -403,6 +403,8 @@
    (or thing nil-ok)
    (not (memq thing lambda-list-keywords))))
 
+(defvar *structured-lambda-list*)
+
 (defun lambda-list-arg-p (thing lambda-list-ok)
   (and 
    lambda-list-ok
