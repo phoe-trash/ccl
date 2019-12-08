@@ -484,27 +484,6 @@
                        :int)
         (%get-cstring buffer)))))
 
-;;; This returns something lower-level than the pthread, if that
-;;; concept makes sense.  On current versions of Linux, it returns
-;;; the pid of the clone()d process; on Darwin, it returns a Mach
-;;; thread.  On some (near)future version of Linux, the concept
-;;; may not apply.
-;;; The future is here: on Linux systems using NPTL, this returns
-;;; exactly the same thing that (getpid) does.
-;;; This should probably be retired; even if it does something
-;;; interesting, is the value it returns useful ?
-
-(defun lisp-thread-native-thread (thread)
-  (with-macptrs (tcrp)
-    (%setf-macptr-to-object tcrp (lisp-thread.tcr thread))
-    (unless (%null-ptr-p tcrp)
-      #+(and windows-target x8632-target)
-      (let ((aux (%get-ptr tcrp (- target::tcr.aux target::tcr-bias))))
-	(%get-unsigned-long aux target::tcr-aux.native-thread-id))
-      #-(and windows-target x8632-target)
-      (#+32-bit-target %get-unsigned-long
-       #+64-bit-target %%get-unsigned-longlong tcrp target::tcr.native-thread-id))))
-
 (defun lisp-thread-suspend-count (thread)
   (with-lock-grabbed ((lisp-thread.state-change-lock thread))
     (let* ((tcr (lisp-thread.tcr thread)))
