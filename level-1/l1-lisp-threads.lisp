@@ -18,11 +18,6 @@
 
 (in-package "CCL")
 
-(defvar *bind-io-control-vars-per-process* nil
-  "If true, bind I/O control variables per process")
-
-
-	     
 (defun lisp-thread-p (thing)
   (istruct-typep thing 'lisp-thread))
 
