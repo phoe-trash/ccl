@@ -299,6 +299,9 @@
        (not (macro-function sym))
        (fboundp sym)))
 
+(defun existing-setf-function-name (sym)
+  (gethash sym %setf-function-names%))
+
 (defun %trace-package (pkg &rest args)
   (declare (dynamic-extent args))
   (do-present-symbols (sym pkg)
