@@ -1048,7 +1048,7 @@
 			      (or (not *option-is-meta*)
                                   #-cocotron
 				  (and native-c
-				       (ccl::valid-char-code-p native-c)
+				       (typep native-c 'ccl::valid-char-code)
 				       (standard-char-p (code-char (the ccl::valid-char-code native-c)))))
 			      (setq quote-p t)))
 		   native-c

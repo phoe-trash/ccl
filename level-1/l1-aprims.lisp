@@ -3609,18 +3609,6 @@ are rounded up to a multiple of 64Kbytes."
          (setf ,place ,cdr)
          (free-cons ,list)))))
 
-(defun valid-char-code-p (code)
-  (and (typep code 'fixnum)
-       (locally (declare (fixnum code))
-         (and 
-          (>= code 0)
-          (< code #x110000)
-          (or (< code #xfffe)
-              (> code #xffff))
-          (or (< code #xd800)
-              (> code #xdfff))))))
-
-
 (defpackage #.(ftd-interface-package-name
                (backend-target-foreign-type-data *target-backend*))
   (:nicknames "OS")

@@ -4245,8 +4245,15 @@
               '((complex short-float) (complex double-float))))
 ;(setq *type-system-initialized* t)
 
-
-
+(defun %valid-char-code-p (code)
+  (declare (fixnum code))
+  (and
+   (>= code 0)
+   (< code #x110000)
+   (or (< code #xfffe)
+       (> code #xffff))
+   (or (< code #xd800)
+       (> code #xdfff))))
 
 ; These deftypes help the CMUCL compiler; the type system doesn't depend on them.
 
@@ -4321,7 +4328,7 @@
 ;;; Better than nothing, arguably.
 (deftype function-name () `(or symbol setf-function-name))
 
-(deftype valid-char-code () `(satisfies valid-char-code-p))
+(deftype valid-char-code () `(and fixnum (satisfies %valid-char-code-p)))
 
 )                                       ; end of LET* sleaze
 
