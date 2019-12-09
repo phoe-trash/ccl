@@ -340,10 +340,6 @@ terminate the list"
 
 (defun logical-pathname-p (thing) (istruct-typep thing 'logical-pathname))
 
-;;; It's back ...
-(defun list-nreverse (list)
-  (nreconc list nil))
-
 ;;; We probably want to make this smarter so that less boxing
 ;;; (and bignum/double-float consing!) takes place.
 
@@ -362,7 +358,7 @@ terminate the list"
    is destroyed."
   (when seq
     (seq-dispatch seq
-                  (list-nreverse seq)
+                  (nreconc seq nil)
                   (vector-nreverse seq))))
 
 (defun nreconc (x y)
