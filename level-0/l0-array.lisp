@@ -538,29 +538,21 @@ minimum number of elements to add if it must be extended."
       (setf (%svref vector target::vectorH.logsize-cell) (the fixnum (1+ fill))))
     fill))
 
+(defmacro %vector-from-lexpr ((length-arg lexpr-arg) allocated-vector)
+  (let ((i (gensym "I")) (v (gensym "VECTOR")))
+    `(let* ((,length-arg (%lexpr-count vals))
+            (,v ,allocated-vector))
+       (declare (fixnum ,length-arg))
+       (dotimes (,i ,length-arg ,v)
+         (setf (%svref ,v ,i) (%lexpr-ref ,lexpr-arg ,length-arg ,i))))))
+
 ;;; Could avoid potential memoization somehow
 (defun vector (&lexpr vals)
   "Construct a SIMPLE-VECTOR from the given objects."
-  (let* ((n (%lexpr-count vals))
-         (v (allocate-typed-vector :simple-vector n)))
-    (declare (fixnum n))
-    (dotimes (i n v) (setf (%svref v i) (%lexpr-ref vals n i)))))
+  (%vector-from-lexpr (n vals) (allocate-typed-vector :simple-vector n)))
 
-;;; CALL-ARGUMENTS-LIMIT.
-(defun list-to-vector (elts)
-  (let* ((n (length elts)))
-    (declare (fixnum n))
-    (if (< n (floor #x8000 target::node-size))
-      (apply #'vector elts)
-      (make-array n :initial-contents elts))))
-
-             
-    
 (defun %gvector (subtag &lexpr vals)
-  (let* ((n (%lexpr-count vals))
-         (v (%alloc-misc n subtag)))
-    (declare (fixnum n))
-    (dotimes (i n v) (setf (%svref v i) (%lexpr-ref vals n i)))))
+  (%vector-from-lexpr (n vals) (%alloc-misc n subtag)))
 
 (defun %aref1 (v i)
   (let* ((typecode (typecode v)))

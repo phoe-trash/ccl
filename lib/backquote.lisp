@@ -29,6 +29,13 @@
    (multiple-value-bind (form constantp) (backquote-aux form)
      (backq-form form constantp)))
 
+(defun list-to-vector (elts)
+  (let* ((n (length elts)))
+    (declare (fixnum n))
+    (if (< n (floor call-arguments-limit target::node-size))
+      (apply #'vector elts)
+      (make-array n :initial-contents elts))))
+
 (defun backquote-aux (form)
   ;;Doesn't try to optimize multiple CONS's into LIST/LIST*'s, leaving it up
   ;;to the compiler.  The code here is mainly concerned with folding
