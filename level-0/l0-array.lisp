@@ -525,10 +525,7 @@ minimum number of elements to add if it must be extended."
           (declare (fixnum flags))
           (unless (logbitp $arh_adjp_bit flags)
             (%err-disp $XMALADJUST vector))
-          (let* ((new-size (max
-                            (+ len (the fixnum (or extension
-                                                  len)))
-                            4))
+          (let* ((new-size (max (+ len (the fixnum (or extension len))) 4))
                  (typecode (typecode data))
                  (new-vector (%alloc-misc new-size typecode)))
             (%uvector-replace new-vector 0 data offset fill typecode)
@@ -638,70 +635,61 @@ minimum number of elements to add if it must be extended."
         (incf result (the fixnum (* chunk-size (the fixnum index))))
         (setq chunk-size (* chunk-size dim))))))
 
-(defun aref (a &lexpr subs)
+(defmacro %with-aref-body ((array lexpr-var count-var accessor
+                            &optional value-var value-count-var)
+                           (result-data-var result-offset-var)
+                           &body body)
+  (let ((typecode (gensym "TYPECODE"))
+        (tmp-offset-var (gensym "OFFSET"))
+        (rmi (gensym "RMI")))
+  (labels
+      ((generate-case-entry (n)
+         (loop for i from 0 below n
+               collect `(%lexpr-ref ,lexpr-var ,(or value-count-var count-var) ,i) into result
+               finally (return `(,(or (find-symbol (format nil "~A~D" accessor n))
+                                      (bug "Bug in %WITH-AREF-BODY - symbol not found."))
+                                 ,array ,@result ,@(when value-var `(,value-var))))))
+       (check-array-valid (array)
+         `(let* ((,typecode (typecode ,array)))
+            (declare (fixnum ,typecode))
+            (cond
+              ((or (>= (the (unsigned-byte 8) (gvector-typecode-p ,typecode))
+                       target::subtag-vectorH)
+                   (>= (the (unsigned-byte 8) (ivector-typecode-p ,typecode))
+                       target::min-cl-ivector-subtag))
+               (%err-disp $XNDIMS ,array ,count-var))
+              ((/= ,typecode target::subtag-arrayH)
+               (report-bad-arg ,array 'array))
+              ((/= (the fixnum (%svref ,array target::arrayH.rank-cell)) ,count-var)
+               (%err-disp $XNDIMS ,array ,count-var))))))
+    `(let ,(when value-var `((,value-var (%lexpr-ref ,lexpr-var ,value-count-var ,count-var))))
+       (case ,count-var
+       (1 ,(generate-case-entry 1))
+       (2 ,(generate-case-entry 2))
+       (3 ,(generate-case-entry 3))
+       (t
+        ,(check-array-valid array)
+        (let* ((,rmi (%array-index ,array ,lexpr-var ,count-var)))
+          (declare (fixnum ,rmi))
+          (multiple-value-bind (,result-data-var ,tmp-offset-var)
+              (%array-header-data-and-offset ,array)
+            (declare (fixnum ,tmp-offset-var))
+            (let ((,result-offset-var (+ ,tmp-offset-var ,rmi)))
+              (declare (fixnum ,result-offset-var))
+              ,@body)))))))))
+
+(defun aref (array &lexpr subs)
   "Return the element of the ARRAY specified by the SUBSCRIPTS."
-  (let* ((n (%lexpr-count subs)))
-    (declare (fixnum n))
-    (if (= n 1)
-      (%aref1 a (%lexpr-ref subs n 0))
-      (if (= n 2)
-        (%aref2 a (%lexpr-ref subs n 0) (%lexpr-ref subs n 1))
-        (if (= n 3)
-          (%aref3 a (%lexpr-ref subs n 0) (%lexpr-ref subs n 1) (%lexpr-ref subs n 2))
-          (let* ((typecode (typecode a)))
-            (declare (fixnum typecode))
-            (if (or (>= (the (unsigned-byte 8) (gvector-typecode-p typecode))
-                        target::subtag-vectorH)
-                    (>= (the (unsigned-byte 8) (ivector-typecode-p typecode))
-                        target::min-cl-ivector-subtag))
-              (%err-disp $XNDIMS a n)
-              (if (/= typecode target::subtag-arrayH)
-                (report-bad-arg a 'array)
-                ;;  This typecode is Just Right ...
-                (progn
-                  (unless (= (the fixnum (%svref a target::arrayH.rank-cell)) n)
-                    (%err-disp $XNDIMS a n))
-                  (let* ((rmi (%array-index a subs n)))
-                    (declare (fixnum rmi))
-                    (multiple-value-bind (data offset) (%array-header-data-and-offset a)
-                      (declare (fixnum offset))
-                      (uvref data (the fixnum (+ offset rmi))))))))))))))
-
-
-
-
+  (let ((n (%lexpr-count subs)))
+    (%with-aref-body (array subs n %aref) (data offset)
+      (uvref data offset))))
 
 (defun aset (a &lexpr subs&val)
+  "Set the element of the ARRAY specified by the SUBSCRIPTS."
   (let* ((count (%lexpr-count subs&val))
          (nsubs (1- count)))
-    (declare (fixnum nsubs count))
-    (if (eql count 0)
-      (%err-disp $xneinps)
-      (let* ((val (%lexpr-ref subs&val count nsubs)))
-        (if (= nsubs 1)
-          (%aset1 a (%lexpr-ref subs&val count 0) val)
-          (if (= nsubs 2)
-            (%aset2 a (%lexpr-ref subs&val count 0) (%lexpr-ref subs&val count 1) val)
-            (if (= nsubs 3)
-              (%aset3 a (%lexpr-ref subs&val count 0) (%lexpr-ref subs&val count 1) (%lexpr-ref subs&val count 2) val)
-              (let* ((typecode (typecode a)))
-                (declare (fixnum typecode))
-                (if (or (>= (the (unsigned-byte 8) (gvector-typecode-p typecode))
-                        target::subtag-vectorH)
-                    (>= (the (unsigned-byte 8) (ivector-typecode-p typecode))
-                        target::min-cl-ivector-subtag))
-                  (%err-disp $XNDIMS a nsubs)
-                  (if (/= typecode target::subtag-arrayH)
-                    (report-bad-arg a 'array)
-                    ;;  This typecode is Just Right ...
-                    (progn
-                      (unless (= (the fixnum (%svref a target::arrayH.rank-cell)) nsubs)
-                        (%err-disp $XNDIMS a nsubs))
-                      (let* ((rmi (%array-index a subs&val nsubs)))
-                        (declare (fixnum rmi))
-                        (multiple-value-bind (data offset) (%array-header-data-and-offset a)
-                          (setf (uvref data (the fixnum (+ offset rmi))) val))))))))))))))
-
+    (%with-aref-body (a subs&val nsubs %aset val count) (data offset)
+      (setf (uvref data offset) val))))
 
 (defun schar (s i)
   "SCHAR returns the character object at an indexed position in a string
