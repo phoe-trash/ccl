@@ -865,27 +865,13 @@
 
 (%fhave 'target-fasl-max-version #'bootstrapping-fasl-max-version)
 
+(defun %make-faslstate ()
+  (%istruct 'faslstate nil nil nil nil nil nil nil nil nil nil nil nil nil nil))
+
 (defun %fasload (string &optional (table *fasl-dispatch-table*))
-  ;;(dbg string) 
-  (when (and *%fasload-verbose*
-	     (not *load-verbose*))
+  (when (and *%fasload-verbose* (not *load-verbose*))
     (%string-to-stderr ";Loading ") (pdbg string))
-  (let* ((s (%istruct
-             'faslstate
-             nil
-             nil
-             nil
-             nil
-             nil
-             nil
-             nil
-             nil
-             nil
-             nil
-             nil
-             nil
-             nil
-             nil)))
+  (let* ((s (%make-faslstate)))
     (declare (dynamic-extent s))
     (setf (faslstate.faslfname s) string)
     (setf (faslstate.fasldispatch s) table)
