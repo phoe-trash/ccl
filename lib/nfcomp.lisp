@@ -1579,6 +1579,8 @@ Will differ from *compiling-file* during an INCLUDE")
     (when initform
       (fasl-dump-form initform))))
 
+(defmacro fasl-epush-op (op) `(%ilogior2 ,$fasl-epush-mask ,op))
+
 (defun fasl-out-opcode (opcode form)
   (if *fasdump-epush*
     (progn
@@ -1604,13 +1606,7 @@ Will differ from *compiling-file* during an INCLUDE")
     (immediate (fasl-dump-t_imm exp))
     (double-float (fasl-dump-dfloat exp))
     (single-float (fasl-dump-sfloat exp))
-    (simple-string
-     (let* ((nextra (utf-8-extra-bytes exp)))
-       (cond ((= 0 nextra)
-              (fasl-out-opcode $fasl-nvstr exp)
-              (fasl-out-nvstring exp))
-             (t (fasl-out-opcode $fasl-vstr exp)
-                (fasl-out-vstring exp nextra)))))
+    (simple-string (fasl-dump-nvstring exp))
     (simple-bit-vector (fasl-dump-bit-vector exp))
     ((simple-array (unsigned-byte 8) (*))
      (fasl-dump-8-bit-ivector exp $fasl-u8-vector))
@@ -1673,6 +1669,10 @@ Will differ from *compiling-file* during an INCLUDE")
            (fasl-out-count n)
            (dotimes (i n)
              (fasl-dump-form (%svref exp i)))))))))
+
+(defun fasl-dump-nvstring (exp)
+  (fasl-out-opcode $fasl-nvstr exp)
+  (fasl-out-nvstring exp))
 
 (defun fasl-dump-gvector (v op)
   (let* ((n (uvsize v)))
@@ -1897,18 +1897,10 @@ Will differ from *compiling-file* during an INCLUDE")
   (fasl-out-opcode $fasl-sfloat float)
   (fasl-out-long (single-float-bits float)))
 
-
 (defun fasl-dump-package (pkg)
-  (let* ((name (package-name pkg))
-         (nextra (utf-8-extra-bytes name)))
-    (cond ((eql nextra 0)
-           (fasl-out-opcode $fasl-nvpkg pkg)
-           (fasl-out-nvstring name))
-          (t
-           (fasl-out-opcode $fasl-vpkg pkg)
-           (fasl-out-vstring name nextra)))))
-
-
+  (let* ((name (package-name pkg)))
+    (fasl-out-opcode $fasl-nvpkg pkg)
+    (fasl-out-nvstring name)))
 
 (defun fasl-dump-list (list)
   (cond ((null list) (fasl-out-opcode $fasl-nil list))
@@ -1955,39 +1947,25 @@ Will differ from *compiling-file* during an INCLUDE")
       (fasl-dump-form inverse)
       (let* ((pkg (symbol-package sym))
              (name (symbol-name sym))
-             (nextra (utf-8-extra-bytes name))
-             (ascii (eql nextra 0))
-             (idx (let* ((i (%svref (symptr->symvector (%symbol->symptr sym)) target::symbol.binding-index-cell)))
+             (idx (let* ((i (%svref (symptr->symvector (%symbol->symptr sym))
+                                    target::symbol.binding-index-cell)))
                     (declare (fixnum i))
                     (unless (zerop i) i))))
-        (cond ((null pkg) 
-               (progn 
-                 (fasl-out-opcode (if idx
-                                    (if ascii $fasl-nvmksym-special $fasl-vmksym-special)
-                                    (if ascii $fasl-nvmksym $fasl-vmksym))
-                                  sym)
-                 (if ascii
-                   (fasl-out-nvstring name)
-                   (fasl-out-vstring name nextra))))
+        (cond ((null pkg)
+               (progn
+                 (fasl-out-opcode (if idx $fasl-nvmksym-special $fasl-nvmksym) sym)
+                 (fasl-out-nvstring name)))
               (*fasdump-epush*
                (progn
-                 (fasl-out-byte (fasl-epush-op (if idx
-                                                 (if ascii $fasl-nvpkg-intern-special $fasl-vpkg-intern-special)
-                                                 (if ascii $fasl-nvpkg-intern $fasl-vpkg-intern))))
+                 (fasl-out-byte (fasl-epush-op (if idx $fasl-nvpkg-intern-special $fasl-nvpkg-intern)))
                  (fasl-dump-form pkg)
                  (fasl-dump-epush sym)
-                 (if ascii
-                   (fasl-out-nvstring name)
-                   (fasl-out-vstring name nextra))))
+                 (fasl-out-nvstring name)))
               (t
                (progn
-                 (fasl-out-byte (if idx
-                                  (if ascii $fasl-nvpkg-intern-special $fasl-vpkg-intern-special)
-                                  (if ascii $fasl-nvpkg-intern $fasl-vpkg-intern)))
+                 (fasl-out-byte (if idx $fasl-nvpkg-intern-special $fasl-nvpkg-intern))
                  (fasl-dump-form pkg)
-                 (if ascii
-                   (fasl-out-nvstring name)
-                   (fasl-out-vstring name nextra)))))))))
+                 (fasl-out-nvstring name))))))))
 
 
 (defun fasl-unknown (exp)
@@ -2015,46 +1993,7 @@ Will differ from *compiling-file* during an INCLUDE")
               ((>= code #x800) (incf extra 2))
               ((>= code #x80) (incf extra 1)))))))
 
-(defun fasl-out-vstring (str nextra)
-  (declare (fixnum nextra))
-  (let* ((len (length str)))
-    (declare (fixnum len))
-    (fasl-out-count len)
-    (fasl-out-count nextra)
-    (dotimes (i len)
-      (let* ((code (%scharcode str i)))
-        (declare ((mod #x110000) code))
-        (cond ((< code #x80) (fasl-out-byte code))
-              ((< code #x800)
-               (let* ((y (ldb (byte 5 6) code))
-                      (z (ldb (byte 6 0) code)))
-                 (declare (fixnum y z))
-                 (fasl-out-byte (logior #xc0 y))
-                 (fasl-out-byte (logior #x80 z))))
-              ((< code #x10000)
-               (let* ((x (ldb (byte 4 12) code))
-                      (y (ldb (byte 6 6) code))
-                      (z (ldb (byte 6 0) code)))
-                 (declare (fixnum x y z))
-                 (fasl-out-byte (logior #xe0 x))
-                 (fasl-out-byte (logior #x80 y))
-                 (fasl-out-byte (logior #x80 z))))
-              (t
-                (let* ((w (ldb (byte 3 18) code))
-                       (x (ldb (byte 6 12) code))
-                       (y (ldb (byte 6 6) code))
-                       (z (ldb (byte 6 0) code)))
-                  (declare (fixnum w x y z))
-                  (fasl-out-byte (logior #xf0 w))
-                  (fasl-out-byte (logior #x80 x))
-                  (fasl-out-byte (logior #x80 y))
-                  (fasl-out-byte (logior #x80 z)))))))))
-
-
-(defun fasl-out-ivect (iv &optional 
-                          (start 0) 
-                          (nb 
-			   (subtag-bytes (typecode iv) (uvsize iv))))
+(defun fasl-out-ivect (iv &optional (start 0) (nb (subtag-bytes (typecode iv) (uvsize iv))))
   (stream-write-ivector *fasdump-stream* iv start nb))
 
 

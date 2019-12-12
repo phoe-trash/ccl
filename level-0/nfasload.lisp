@@ -245,17 +245,6 @@
     (setf (faslstate.faslepush s) epush)
     val))
 
-
-(defun %fasl-vmake-symbol (s &optional idx)
-  (let* ((n (%fasl-read-count s))
-         (nextra (%fasl-read-count s))
-         (str (make-string n :element-type 'base-char)))
-    (declare (fixnum n))
-    (%fasl-read-utf-8-string s str n nextra)
-    (let* ((sym (make-symbol str)))
-      (when idx (ensure-binding-index sym))
-      (%epushval s sym))))
-
 (defun %fasl-nvmake-symbol (s &optional idx)
   (let* ((n (%fasl-read-count s))
          (str (make-string n :element-type 'base-char)))
@@ -264,18 +253,6 @@
     (let* ((sym (make-symbol str)))
       (when idx (ensure-binding-index sym))
       (%epushval s sym))))
-
-(defun %fasl-vintern (s package &optional binding-index)
-  (multiple-value-bind (str len new-p) (%fasl-vreadstr s)
-    (with-package-lock (package)
-      (multiple-value-bind (symbol access internal-offset external-offset)
-          (%find-symbol str len package)
-        (unless access
-          (unless new-p (setq str (%fasl-copystr str len)))
-          (setq symbol (%add-symbol str package internal-offset external-offset)))
-        (when binding-index
-          (ensure-binding-index symbol))
-        (%epushval s symbol)))))
 
 (defun %fasl-nvintern (s package &optional binding-index)
   (multiple-value-bind (str len new-p) (%fasl-nvreadstr s)
@@ -379,11 +356,6 @@
                      (errorp (%kernel-restart $xnopkg xthing)))))
             (t (report-bad-arg thing 'simple-string))))))
 
-(defun %fasl-vpackage (s)
-  (multiple-value-bind (str len new-p) (%fasl-vreadstr s)
-    (let* ((p (%find-pkg str len)))
-      (%epushval s (or p (%kernel-restart $XNOPKG (if new-p str (%fasl-copystr str len))))))))
-
 (defun %fasl-nvpackage (s)
   (multiple-value-bind (str len new-p) (%fasl-nvreadstr s)
     (let* ((p (%find-pkg str len)))
@@ -460,14 +432,6 @@
 (deffaslop $fasl-char (s)
   (%epushval s (code-char (%fasl-read-count s))))
 
-;;; Deprecated
-(deffaslop $fasl-fixnum (s)
-  (%epushval
-   s
-   (logior (the fixnum (ash (the fixnum (%word-to-int (%fasl-read-word s)))
-                            16))
-           (the fixnum (%fasl-read-word s))) ))
-
 (deffaslop $fasl-s32 (s)
   (%epushval s (%fasl-read-signed-long s)))
 
@@ -484,14 +448,6 @@
 (deffaslop $fasl-sfloat (s)
   (%epushval s (host-single-float-from-unsigned-byte-32 (%fasl-read-long s))))
 
-(deffaslop $fasl-vstr (s)
-  (let* ((nchars (%fasl-read-count s))
-         (nextra (%fasl-read-count s))
-         (str (make-string (the fixnum nchars) :element-type 'base-char)))
-    (%epushval s str)
-    (%fasl-read-utf-8-string s str nchars nextra)))
-
-
 (deffaslop $fasl-nvstr (s)
   (let* ((n (%fasl-read-count s))
          (str (make-string (the fixnum n) :element-type 'base-char)))
@@ -501,26 +457,14 @@
 (deffaslop $fasl-word-fixnum (s)
   (%epushval s (%word-to-int (%fasl-read-word s))))
 
-(deffaslop $fasl-vmksym (s)
-  (%fasl-vmake-symbol s))
-
 (deffaslop $fasl-nvmksym (s)
   (%fasl-nvmake-symbol s))
-
-(deffaslop $fasl-vmksym-special (s)
-  (%fasl-vmake-symbol s t))
 
 (deffaslop $fasl-nvmksym-special (s)
   (%fasl-nvmake-symbol s t))
 
-(deffaslop $fasl-vintern (s)
-  (%fasl-vintern s *package*))
-
 (deffaslop $fasl-nvintern (s)
   (%fasl-nvintern s *package*))
-
-(deffaslop $fasl-vintern-special (s)
-  (%fasl-vintern s *package* t))
 
 (deffaslop $fasl-nvintern-special (s)
   (%fasl-nvintern s *package* t))
@@ -528,32 +472,13 @@
 
 
 
-(deffaslop $fasl-vpkg-intern (s)
-  (let* ((pkg (%fasl-expr-preserve-epush s)))
-    #+paranoia
-    (setq pkg (pkg-arg pkg))
-    (%fasl-vintern s pkg)))
-
 (deffaslop $fasl-nvpkg-intern (s)
   (let* ((pkg (%fasl-expr-preserve-epush s)))
-    #+paranoia
-    (setq pkg (pkg-arg pkg))
     (%fasl-nvintern s pkg)))
-
-(deffaslop $fasl-vpkg-intern-special (s)
-  (let* ((pkg (%fasl-expr-preserve-epush s)))
-    #+paranoia
-    (setq pkg (pkg-arg pkg))
-    (%fasl-vintern s pkg t)))
 
 (deffaslop $fasl-nvpkg-intern-special (s)
   (let* ((pkg (%fasl-expr-preserve-epush s)))
-    #+paranoia
-    (setq pkg (pkg-arg pkg))
     (%fasl-nvintern s pkg t)))
-
-(deffaslop $fasl-vpkg (s)
-  (%fasl-vpackage s))
 
 (deffaslop $fasl-nvpkg (s)
   (%fasl-nvpackage s))

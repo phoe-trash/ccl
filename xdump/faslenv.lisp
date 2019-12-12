@@ -48,14 +48,13 @@
          (nfunction ,n (lambda ,arglist ,@body))))
 
 
-(defconstant $fasl-noop 0)              ;<nada:zilch>.  
+(defconstant $fasl-noop 0)              ;<nada:zilch>.
 (defconstant $fasl-s32-vector 1)        ;<count> Make a (SIMPLE-ARRAY (SIGNED-BYTE 32) <count>)
 (defconstant $fasl-code-vector 2)       ;<count> words of code
 (defconstant $fasl-clfun 3)             ;<size:count><codesize:count>code,size-codesize exprs
 (defconstant $fasl-lfuncall 4)          ;<lfun:expr> funcall the lfun.
 (defconstant $fasl-globals 5)           ;<expr> global symbols vector
 (defconstant $fasl-char 6)              ;<char:byte> Make a char
-(defconstant $fasl-fixnum 7)            ;<value:long> Make a (4-byte) fixnum
 (defconstant $fasl-dfloat 8)            ;<hi:long><lo:long> Make a DOUBLE-FLOAT
 (defconstant $fasl-bignum32 9)          ;<count> make a bignum with count digits
 (defconstant $fasl-word-fixnum 10)      ;<value:word> Make a fixnum
@@ -69,8 +68,6 @@
 (defconstant $fasl-nil 18)              ; Make nil
 (defconstant $fasl-timm 19)             ;<n:long>
 (defconstant $fasl-function 20)         ;<count> Make function
-(defconstant $fasl-vstr 21)             ;<vstring> Make a string
-(defconstant $fasl-vmksym 22)           ;<vstring> Make an uninterned symbol
 (defconstant $fasl-platform 23)         ;<n:byte> Ensure that file's loadable on platform n.
 (defconstant $fasl-vetab-alloc 24)      ;<count:count> Make a new expression table
                                         ; with count slots.  Current etab gets lost.
@@ -80,9 +77,6 @@
 (defconstant $fasl-eval 28)             ;<expr> Eval <expr> and return value.
 (defconstant $fasl-u16-vector 29)       ;<count> Make a (SIMPLE-ARRAY (UNSIGNED-BYTE 16) <count>)
 (defconstant $fasl-s16-vector 30)       ;<count> Make a (SIMPLE-ARRAY (SIGNED-BYTE 16) <count>)
-(defconstant $fasl-vintern 31)          ;<vstring> Intern in current pkg.
-(defconstant $fasl-vpkg-intern 32)      ;<pkg:expr><vstring> Make a sym in pkg.
-(defconstant $fasl-vpkg 33)             ;<vstring> Returns the package of given name
 (defconstant $fasl-vgvec 34)            ;<subtype:byte><n:count><n exprs>
 (defconstant $fasl-defun 35)            ;<fn:expr><doc:expr>
 (defconstant $fasl-macro 37)            ;<fn:expr><doc:expr>
@@ -106,18 +100,15 @@
 (defconstant $fasl-vector-header 55)    ;<count> Make a vector header
 (defconstant $fasl-array-header 56)     ;<count> Make an array header.
 (defconstant $fasl-s32 57)              ;<4bytes> Make a (SIGNED-BYTE 32)
-(defconstant $fasl-vintern-special 58)  ;<vstring> Intern in current pkg, ensure that it has a special binding index
 (defconstant $fasl-s64 59)              ;<8bytes> Make a (SIGNED-BYTE 64)
-(defconstant $fasl-vpkg-intern-special 60) ;<pkg:expr><vstring> Make a sym in pkg, ensure that it has a special binding index
-(defconstant $fasl-vmksym-special 61)   ;<vstring> Make an uninterned symbol, ensure special binding index
 (defconstant $fasl-nvmksym-special 62)  ;<nvstring> Make an uninterned symbol, ensure special binding index
 (defconstant $fasl-nvpkg-intern-special 63) ;<pkg:expr><nvstring> Make a sym in pkg, ensure that it has a special binding index
 (defconstant $fasl-nvintern-special 64)  ;<nvstring> Intern in current pkg, ensure that it has a special binding index
-(defconstant $fasl-nvpkg 65)            ;<vstring> Returns the package of given name
+(defconstant $fasl-nvpkg 65)            ;<nvstring> Returns the package of given name
 (defconstant $fasl-nvpkg-intern 66)     ;<nvstring> Intern in current pkg.
 (defconstant $fasl-nvintern 67)         ;<pkg:expr><nvstring> Make a sym in pkg.
-(defconstant $fasl-nvmksym 68)          ;<nvstring> Make a string
-(defconstant $fasl-nvstr 69)            ;<nvstring> Make an uninterned symbol
+(defconstant $fasl-nvmksym 68)          ;<nvstring> Make an uninterned symbol
+(defconstant $fasl-nvstr 69)            ;<nvstring> Make a string
 (defconstant $fasl-toplevel-location 70);<expr> - Set *loading-toplevel-location* to <expr>
 (defconstant $fasl-istruct-cell 71)     ;<expr> register istruct cell for expr
 
@@ -129,14 +120,9 @@
 ;;;  7 bits per octet, the least significant bits written first and the most
 ;;;  significant octet having bit 7 set, so 127 would be written as #x00 and
 ;;;  128 as #x00 #x81
-;;; <vstring> is a <count> (string length) followed by count octets of
-;;; 8-bit charcode data.
 ;;; <nvstring> is a <count> (string length) followd by count <counts> of
-;;;  variable-length charcode data.  This encodes ASCII/STANDARD-CHAR as
-;;;  compactly as the <vstring> encoding, which should probably be deprecated.
+;;;  variable-length charcode data.
 
 (defconstant $fasl-epush-mask #x80)  ;Push value on etab if this bit is set in opcode.
-
-(defmacro fasl-epush-op (op) `(%ilogior2 ,$fasl-epush-mask ,op))
 
 (provide "FASLENV")
