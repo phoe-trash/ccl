@@ -1322,7 +1322,7 @@ Certain types of objects are treated a little specially:"
         table, immediate values, or some combination of these.
 
         An exception is the bytecode #xFF, which has the symbolic
-        name ccl::$faslend; it is used to mark the end of the
+        name ccl::$fasl-end; it is used to mark the end of the
         block.|)
   (defsection "The Objective-C Bridge"
     (defsection "How {CCL} Recognizes Objective-C Objects"

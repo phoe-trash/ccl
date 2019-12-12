@@ -994,7 +994,7 @@
                              (setf (faslstate.faslevec s) nil
                                    (faslstate.faslecnt s) 0)
                              (do* ((op (%fasl-read-byte s) (%fasl-read-byte s)))
-                                  ((= op $faslend))
+                                  ((= op $fasl-end))
                                (declare (fixnum op))
                                (%fasl-dispatch s op))))))))))
 	  (%fasl-close s))

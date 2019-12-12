@@ -41,7 +41,7 @@
 (defconstant $fasl-epush-bit 7)
 (defconstant $fasl-file-id #xff00)
 (defconstant $fasl-file-id1 #xff01)
-(defconstant $faslend #xff)
+(defconstant $fasl-end #xFF) ;; Stop reading.
 (defconstant $fasl-buf-len 2048)
 (defmacro deffaslop (n arglist &body body)
   `(setf (svref *fasl-dispatch-table* ,n)
@@ -134,10 +134,6 @@
 ;;; <nvstring> is a <count> (string length) followd by count <counts> of
 ;;;  variable-length charcode data.  This encodes ASCII/STANDARD-CHAR as
 ;;;  compactly as the <vstring> encoding, which should probably be deprecated.
-
-
-
-(defconstant $fasl-end #xFF)    ;Stop reading.
 
 (defconstant $fasl-epush-mask #x80)  ;Push value on etab if this bit is set in opcode.
 
