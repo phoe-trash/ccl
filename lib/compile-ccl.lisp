@@ -447,14 +447,11 @@
             (provide module))
           (require module fasl))
         (if (probe-file source)
-          (progn
-            (if fasl (format t "~&Can't find ~S so requiring ~S instead"
-                             fasl source))
-            (if force-load
-              (progn
-                (load source)
-                (provide module))
-              (require module source)))
+          (if force-load
+            (progn
+              (load source)
+              (provide module))
+            (require module source))
           (error "Can't find ~S or ~S" fasl source)))))
 
 (defun require-modules (modules &optional force-load)
