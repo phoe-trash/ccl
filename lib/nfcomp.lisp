@@ -34,6 +34,8 @@
 
 (require "FASLENV" "ccl:xdump;faslenv")
 
+(defmacro fasl-epush-op (op) `(%ilogior2 ,$fasl-epush-mask ,op))
+
 #+ppc32-target
 (require "PPC32-ARCH")
 #+ppc64-target
