@@ -20,6 +20,9 @@
 
 (require "FASLENV" "ccl:xdump;faslenv")
 
+(defmacro deffaslop (n arglist &body body)
+  `(setf (svref *fasl-dispatch-table* ,n)
+         (nfunction ,n (lambda ,arglist ,@body))))
 
 (defconstant $primsizes (make-array 23
                                     :element-type '(unsigned-byte 16)

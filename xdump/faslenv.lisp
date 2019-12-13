@@ -43,10 +43,6 @@
 (defconstant $fasl-file-id1 #xff01)
 (defconstant $fasl-end #xFF) ;; Stop reading.
 (defconstant $fasl-buf-len 2048)
-(defmacro deffaslop (n arglist &body body)
-  `(setf (svref *fasl-dispatch-table* ,n)
-         (nfunction ,n (lambda ,arglist ,@body))))
-
 
 (defconstant $fasl-noop 0)              ;<nada:zilch>.
 (defconstant $fasl-s32-vector 1)        ;<count> Make a (SIMPLE-ARRAY (SIGNED-BYTE 32) <count>)
