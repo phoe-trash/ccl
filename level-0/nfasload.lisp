@@ -409,12 +409,9 @@
           (setf (faslstate.faslval s) function))
       (declare (fixnum i numconst constidx))
       (setf (%svref vector constidx) (%fasl-expr s)))))
-    
-    
+
 (deffaslop $fasl-lfuncall (s)
-  (let* ((fun (%fasl-expr-preserve-epush s)))
-    ;(break "fun = ~s" fun)
-     (%epushval s (funcall fun))))
+  (%epushval s (funcall (%fasl-expr-preserve-epush s))))
 
 (deffaslop $fasl-char (s)
   (%epushval s (code-char (%fasl-read-count s))))
