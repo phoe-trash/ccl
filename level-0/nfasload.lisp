@@ -416,9 +416,6 @@
     ;(break "fun = ~s" fun)
      (%epushval s (funcall fun))))
 
-(deffaslop $fasl-globals (s)
-  (setf (faslstate.faslgsymbols s) (%fasl-expr s)))
-
 (deffaslop $fasl-char (s)
   (%epushval s (code-char (%fasl-read-count s))))
 

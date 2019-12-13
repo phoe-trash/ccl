@@ -50,7 +50,6 @@
 (defconstant $fasl-code-vector 2)       ;<count> words of code
 (defconstant $fasl-clfun 3)             ;<size:count><codesize:count>code,size-codesize exprs
 (defconstant $fasl-lfuncall 4)          ;<lfun:expr> funcall the lfun.
-(defconstant $fasl-globals 5)           ;<expr> global symbols vector
 (defconstant $fasl-char 6)              ;<char:byte> Make a char
 (defconstant $fasl-dfloat 8)            ;<hi:long><lo:long> Make a DOUBLE-FLOAT
 (defconstant $fasl-bignum32 9)          ;<count> make a bignum with count digits

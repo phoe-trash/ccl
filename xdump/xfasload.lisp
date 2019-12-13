@@ -1168,8 +1168,6 @@
       (format t "~& cold-load function: #x~x" fun))
     (push fun *xload-cold-load-functions*)))
 
-(xload-copy-faslop $fasl-globals)        ; what the hell did this ever do ?
-
 ;;; fasl-char: maybe epush, return target representation of BASE-CHARACTER
 (defxloadfaslop $fasl-char (s)
   (let* ((code (%fasl-read-count s))

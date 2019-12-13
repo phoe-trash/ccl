@@ -275,9 +275,7 @@ Will differ from *compiling-file* during an INCLUDE")
 (defun fasl-scan-forms-and-dump-file (forms output-file &optional env)
   (let ((*fcomp-locked-hash-tables* nil)
 	(*fcomp-load-forms-environment* env))
-    (unwind-protect
-      (multiple-value-bind (hash gnames goffsets) (fasl-scan forms)
-        (fasl-dump-file gnames goffsets forms hash output-file))
+    (unwind-protect (fasl-dump-file forms (fasl-scan forms) output-file)
       (fasl-unlock-hash-tables))))
 
 (defun nfcomp (src &optional dest &rest keys)
@@ -1201,7 +1199,6 @@ Will differ from *compiling-file* during an INCLUDE")
 
 (defvar *fasdump-hash*)
 (defvar *fasdump-read-package*)
-(defvar *fasdump-global-offsets*)
 (defvar *make-load-form-hash*)
 
 ;;;Return a hash table containing subexp's which are referenced more than once.
@@ -1211,9 +1208,7 @@ Will differ from *compiling-file* during an INCLUDE")
                                           :test 'eq
 					  :shared nil))
          (*make-load-form-hash* (make-hash-table :test 'eq :shared nil))
-         (*fasdump-read-package* nil)
-         (*fasdump-global-offsets* nil)
-         (gsymbols nil))
+         (*fasdump-read-package* nil))
     (dolist (op forms)
       (if (packagep op) ; old magic treatment of *package*
         (setq *fasdump-read-package* op)
@@ -1228,9 +1223,7 @@ Will differ from *compiling-file* during an INCLUDE")
              *fasdump-hash*)
     (when (eq *compile-verbose* :debug)
       (format t "~S." (hash-table-count *fasdump-hash*)))
-    (values *fasdump-hash*
-            gsymbols
-            *fasdump-global-offsets*)))
+    *fasdump-hash*))
 
 ;;; During scanning, *fasdump-hash* values are one of the following:
 ;;;  nil - form hasn't been referenced yet.
@@ -1479,7 +1472,7 @@ Will differ from *compiling-file* during an INCLUDE")
 (defvar *fasdump-stream*)
 (defvar *fasdump-eref*)
 
-(defun fasl-dump-file (gnames goffsets forms hash filename)
+(defun fasl-dump-file (forms hash filename)
   (let ((opened? nil)
         (finished? nil))
     (unwind-protect
@@ -1493,7 +1486,7 @@ Will differ from *compiling-file* during an INCLUDE")
         (fasl-out-word 1)             ;One block in the file
         (fasl-out-long 12)            ;Block starts at file pos 12
         (fasl-out-long 0)             ;Length will go here
-        (fasl-dump-block gnames goffsets forms hash)  ;Write the block
+        (fasl-dump-block forms hash)  ;Write the block
         (let ((pos (fasl-filepos)))
           (fasl-set-filepos 8)        ;Back to length longword
           (fasl-out-long (- pos 12))) ;Write length
@@ -1523,24 +1516,20 @@ Will differ from *compiling-file* during an INCLUDE")
 (defun target-fasl-max-version ()
   (target-symbol-value "FASL-MAX-VERSION"))
 
-(defun fasl-dump-block (gnames goffsets forms hash)
+(defun fasl-dump-block (forms hash)
   (let ((etab-size (hash-table-count hash)))
     (fasl-out-word (target-fasl-version))          ; Word 0
     (fasl-out-long  0)
     (fasl-out-byte $fasl-vetab-alloc)
     (fasl-out-count etab-size)
-    (fasl-dump gnames goffsets forms hash)
+    (fasl-dump forms hash)
     (fasl-out-byte $fasl-end)))
 
-(defun fasl-dump (gnames goffsets forms hash)
+(defun fasl-dump (forms hash)
   (let* ((*fasdump-hash* hash)
          (*fasdump-read-package* nil)
          (*fasdump-epush* nil)
-         (*fasdump-eref* -1)
-         (*fasdump-global-offsets* goffsets))
-    (when gnames
-      (fasl-out-byte $fasl-globals)
-      (fasl-dump-form gnames))
+         (*fasdump-eref* -1))
     (dolist (op forms)
       (if (packagep op)
         (setq *fasdump-read-package* op)
