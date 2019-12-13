@@ -850,13 +850,6 @@
     (declare (fixnum n))
     (values (xload-save-string str n) str n new-p)))
 
-;;; Read a string from fasl file, save it to readonly-space.
-;;; (assumes variable-length encoding.)
-(defun %xload-fasl-nvreadstr (s)
-  (multiple-value-bind (str n new-p) (%fasl-nvreadstr s)
-    (declare (fixnum n))
-    (values (xload-save-string str n) str n new-p)))
-
 (defun xload-clone-package (package)
   (let ((itab (list* (make-array (length (car (uvref package 0))) :initial-element 0)
                      0 (cddr (pkg.itab package))))
@@ -1238,21 +1231,6 @@
       (xload-read-utf-8-string s v o nchars nextra)
       str)))
 
-(defxloadfaslop $fasl-nvstr (s)
-  (let* ((n (%fasl-read-count s)))
-    (multiple-value-bind (str v o) (xload-make-ivector *xload-readonly-space* :simple-string n)
-      (%epushval s str)
-      (case *xload-target-char-code-limit*
-        (256
-         (dotimes (i n)
-           (setf (u8-ref v (+ o i *xload-target-misc-data-offset*))
-                 (%fasl-read-byte s))))
-        (t
-         (dotimes (i n)
-           (setf (u32-ref v (+ o (* i 4) *xload-target-misc-data-offset*))
-                 (%fasl-read-byte s)))))
-      str)))
-
 ;;; Allegedly deprecated.
 (defxloadfaslop $fasl-fixnum (s)
   (%epushval s (xload-integer
@@ -1300,86 +1278,41 @@
       (xload-ensure-binding-index sym))
     (%epushval s sym)))
 
-(defun %xload-fasl-nvmake-symbol (s &optional idx)
-  (let* ((sym (xload-make-symbol (%xload-fasl-nvreadstr s))))
-    (when idx
-      (xload-ensure-binding-index sym))
-    (%epushval s sym)))
-
-
-
 (defxloadfaslop $fasl-vmksym (s)
   (%xload-fasl-vmake-symbol s))
-
-(defxloadfaslop $fasl-nvmksym (s)
-  (%xload-fasl-nvmake-symbol s))
 
 (defxloadfaslop $fasl-vmksym-special (s)
   (%xload-fasl-vmake-symbol s t))
 
-(defxloadfaslop $fasl-nvmksym-special (s)
-  (%xload-fasl-nvmake-symbol s t))
-
 (defun %xload-fasl-vintern (s package &optional idx)
   (multiple-value-bind (str len new-p) (%fasl-vreadstr s)
     (without-interrupts
-     (multiple-value-bind (cursym access internal external) (%find-symbol str len package)
-       (unless access
-         (unless new-p (setq str (%fasl-copystr str len)))
-         (setq cursym (%add-symbol str package internal external)))
-       ;; cursym now exists in the load-time world; make sure that it exists
-       ;; (and is properly "interned" in the world we're making as well)
-       (let* ((symaddr (xload-copy-symbol cursym)))
-         (when idx
-           (xload-ensure-binding-index symaddr))
-         (%epushval s symaddr))))))
-
-(defun %xload-fasl-nvintern (s package &optional idx)
-  (multiple-value-bind (str len new-p) (%fasl-nvreadstr s)
-    (without-interrupts
-     (multiple-value-bind (cursym access internal external) (%find-symbol str len package)
-       (unless access
-         (unless new-p (setq str (%fasl-copystr str len)))
-         (setq cursym (%add-symbol str package internal external)))
-       ;; cursym now exists in the load-time world; make sure that it exists
-       ;; (and is properly "interned" in the world we're making as well)
-       (let* ((symaddr (xload-copy-symbol cursym)))
-         (when idx
-           (xload-ensure-binding-index symaddr))
-         (%epushval s symaddr))))))
-
+      (multiple-value-bind (cursym access internal external) (%find-symbol str len package)
+        (unless access
+          (unless new-p (setq str (%fasl-copystr str len)))
+          (setq cursym (%add-symbol str package internal external)))
+        ;; cursym now exists in the load-time world; make sure that it exists
+        ;; (and is properly "interned" in the world we're making as well)
+        (let* ((symaddr (xload-copy-symbol cursym)))
+          (when idx
+            (xload-ensure-binding-index symaddr))
+          (%epushval s symaddr))))))
 
 (defxloadfaslop $fasl-vintern (s)
   (%xload-fasl-vintern s *package*))
 
-(defxloadfaslop $fasl-nvintern (s)
-  (%xload-fasl-nvintern s *package*))
-
 (defxloadfaslop $fasl-vintern-special (s)
   (%xload-fasl-vintern s *package* t))
-
-(defxloadfaslop $fasl-nvintern-special (s)
-  (%xload-fasl-nvintern s *package* t))
 
 (defxloadfaslop $fasl-vpkg-intern (s)
   (let* ((addr (%fasl-expr-preserve-epush  s))
          (pkg (xload-addr->package addr)))
     (%xload-fasl-vintern s pkg)))
 
-(defxloadfaslop $fasl-nvpkg-intern (s)
-  (let* ((addr (%fasl-expr-preserve-epush  s))
-         (pkg (xload-addr->package addr)))
-    (%xload-fasl-nvintern s pkg)))
-
 (defxloadfaslop $fasl-vpkg-intern-special (s)
   (let* ((addr (%fasl-expr-preserve-epush  s))
          (pkg (xload-addr->package addr)))
     (%xload-fasl-vintern s pkg t)))
-
-(defxloadfaslop $fasl-nvpkg-intern-special (s)
-  (let* ((addr (%fasl-expr-preserve-epush  s))
-         (pkg (xload-addr->package addr)))
-    (%xload-fasl-nvintern s pkg t)))
 
 (defun %xload-fasl-vpackage (s)
   (multiple-value-bind (str len new-p) (%fasl-vreadstr s)
@@ -1387,18 +1320,8 @@
       (%epushval s (xload-package->addr 
                     (or p (%kernel-restart $XNOPKG (if new-p str (%fasl-copystr str len)))))))))
 
-(defun %xload-fasl-nvpackage (s)
-  (multiple-value-bind (str len new-p) (%fasl-nvreadstr s)
-    (let* ((p (%find-pkg str len)))
-      (%epushval s (xload-package->addr 
-                    (or p (%kernel-restart $XNOPKG (if new-p str (%fasl-copystr str len)))))))))
-
-
 (defxloadfaslop $fasl-vpkg (s)
   (%xload-fasl-vpackage s))
-
-(defxloadfaslop $fasl-nvpkg (s)
-  (%xload-fasl-nvpackage s))
 
 (defxloadfaslop $fasl-cons (s)
   (let* ((cons (%epushval s (xload-make-cons *xload-target-nil* *xload-target-nil*))))

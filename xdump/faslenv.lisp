@@ -106,14 +106,6 @@
 (defconstant $fasl-s64 59)              ;<8bytes> Make a (SIGNED-BYTE 64)
 (defconstant $fasl-vpkg-intern-special 60) ;<pkg:expr><vstring> Make a sym in pkg, ensure that it has a special binding index
 (defconstant $fasl-vmksym-special 61)   ;<vstring> Make an uninterned symbol, ensure special binding index
-(defconstant $fasl-nvmksym-special 62)  ;<nvstring> Make an uninterned symbol, ensure special binding index
-(defconstant $fasl-nvpkg-intern-special 63) ;<pkg:expr><nvstring> Make a sym in pkg, ensure that it has a special binding index
-(defconstant $fasl-nvintern-special 64)  ;<nvstring> Intern in current pkg, ensure that it has a special binding index
-(defconstant $fasl-nvpkg 65)            ;<vstring> Returns the package of given name
-(defconstant $fasl-nvpkg-intern 66)     ;<nvstring> Intern in current pkg.
-(defconstant $fasl-nvintern 67)         ;<pkg:expr><nvstring> Make a sym in pkg.
-(defconstant $fasl-nvmksym 68)          ;<nvstring> Make a string
-(defconstant $fasl-nvstr 69)            ;<nvstring> Make an uninterned symbol
 (defconstant $fasl-toplevel-location 70);<expr> - Set *loading-toplevel-location* to <expr>
 (defconstant $fasl-istruct-cell 71)     ;<expr> register istruct cell for expr
 

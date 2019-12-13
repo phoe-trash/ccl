@@ -2,6 +2,8 @@
 
 (setf *warn-if-redefine-kernel* nil)
 
+(load "ccl:lib;nfcomp.lisp")
+
 ;;; Check that something that's supposed to be a proper list of
 ;;; symbols is; error otherwise.
 ;;; This is called only by the compiler output of a PROGV form.

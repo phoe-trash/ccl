@@ -1595,13 +1595,7 @@ Will differ from *compiling-file* during an INCLUDE")
     (immediate (fasl-dump-t_imm exp))
     (double-float (fasl-dump-dfloat exp))
     (single-float (fasl-dump-sfloat exp))
-    (simple-string
-     (let* ((nextra (utf-8-extra-bytes exp)))
-       (cond ((= 0 nextra)
-              (fasl-out-opcode $fasl-nvstr exp)
-              (fasl-out-nvstring exp))
-             (t (fasl-out-opcode $fasl-vstr exp)
-                (fasl-out-vstring exp nextra)))))
+    (simple-string (fasl-dump-vstring exp))
     (simple-bit-vector (fasl-dump-bit-vector exp))
     ((simple-array (unsigned-byte 8) (*))
      (fasl-dump-8-bit-ivector exp $fasl-u8-vector))
@@ -1664,6 +1658,11 @@ Will differ from *compiling-file* during an INCLUDE")
            (fasl-out-count n)
            (dotimes (i n)
              (fasl-dump-form (%svref exp i)))))))))
+
+(defun fasl-dump-vstring (exp)
+  (let* ((nextra (utf-8-extra-bytes exp)))
+    (fasl-out-opcode $fasl-vstr exp)
+    (fasl-out-vstring exp nextra)))
 
 (defun fasl-dump-gvector (v op)
   (let* ((n (uvsize v)))
@@ -1892,12 +1891,8 @@ Will differ from *compiling-file* during an INCLUDE")
 (defun fasl-dump-package (pkg)
   (let* ((name (package-name pkg))
          (nextra (utf-8-extra-bytes name)))
-    (cond ((eql nextra 0)
-           (fasl-out-opcode $fasl-nvpkg pkg)
-           (fasl-out-nvstring name))
-          (t
-           (fasl-out-opcode $fasl-vpkg pkg)
-           (fasl-out-vstring name nextra)))))
+    (fasl-out-opcode $fasl-vpkg pkg)
+    (fasl-out-vstring name nextra)))
 
 
 
@@ -1947,38 +1942,28 @@ Will differ from *compiling-file* during an INCLUDE")
       (let* ((pkg (symbol-package sym))
              (name (symbol-name sym))
              (nextra (utf-8-extra-bytes name))
-             (ascii (eql nextra 0))
              (idx (let* ((i (%svref (symptr->symvector (%symbol->symptr sym)) target::symbol.binding-index-cell)))
                     (declare (fixnum i))
                     (unless (zerop i) i))))
-        (cond ((null pkg) 
-               (progn 
-                 (fasl-out-opcode (if idx
-                                    (if ascii $fasl-nvmksym-special $fasl-vmksym-special)
-                                    (if ascii $fasl-nvmksym $fasl-vmksym))
-                                  sym)
-                 (if ascii
-                   (fasl-out-nvstring name)
-                   (fasl-out-vstring name nextra))))
+        (cond ((null pkg)
+               (progn
+                 (fasl-out-opcode (if idx $fasl-vmksym-special $fasl-vmksym) sym)
+                 (fasl-out-vstring name nextra)))
               (*fasdump-epush*
                (progn
                  (fasl-out-byte (fasl-epush-op (if idx
-                                                 (if ascii $fasl-nvpkg-intern-special $fasl-vpkg-intern-special)
-                                                 (if ascii $fasl-nvpkg-intern $fasl-vpkg-intern))))
+                                                 $fasl-vpkg-intern-special
+                                                 $fasl-vpkg-intern)))
                  (fasl-dump-form pkg)
                  (fasl-dump-epush sym)
-                 (if ascii
-                   (fasl-out-nvstring name)
-                   (fasl-out-vstring name nextra))))
+                 (fasl-out-vstring name nextra)))
               (t
                (progn
                  (fasl-out-byte (if idx
-                                  (if ascii $fasl-nvpkg-intern-special $fasl-vpkg-intern-special)
-                                  (if ascii $fasl-nvpkg-intern $fasl-vpkg-intern)))
+                                  $fasl-vpkg-intern-special
+                                  $fasl-vpkg-intern))
                  (fasl-dump-form pkg)
-                 (if ascii
-                   (fasl-out-nvstring name)
-                   (fasl-out-vstring name nextra)))))))))
+                 (fasl-out-vstring name nextra))))))))
 
 
 (defun fasl-unknown (exp)
