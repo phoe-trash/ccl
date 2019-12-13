@@ -364,19 +364,6 @@
     (let* ((p (%find-pkg str len)))
       (%epushval s (or p  (%kernel-restart $XNOPKG (if new-p str (%fasl-copystr str len))))))))
 
-(defun %fasl-vlistX (s dotp)
-  (let* ((len (%fasl-read-count s)))
-    (declare (fixnum len))
-    (let* ((val (%epushval s (cons nil nil)))
-           (tail val))
-      (declare (type cons val tail))
-      (setf (car val) (%fasl-expr s))
-      (dotimes (i len)
-        (setf (cdr tail) (setq tail (cons (%fasl-expr s) nil))))
-      (if dotp
-        (setf (cdr tail) (%fasl-expr s)))
-      (setf (faslstate.faslval s) val))))
-
 (deffaslop $fasl-noop (s)
   (%cant-epush s))
 
@@ -492,6 +479,19 @@
     (setf (car cons) (%fasl-expr s)
           (cdr cons) (%fasl-expr s))
     (setf (faslstate.faslval s) cons)))
+
+(defun %fasl-vlistX (s dotp)
+  (let* ((len (%fasl-read-count s)))
+    (declare (fixnum len))
+    (let* ((val (%epushval s (cons nil nil)))
+           (tail val))
+      (declare (type cons val tail))
+      (setf (car val) (%fasl-expr s))
+      (dotimes (i len)
+        (setf (cdr tail) (setq tail (cons (%fasl-expr s) nil))))
+      (if dotp
+        (setf (cdr tail) (%fasl-expr s)))
+      (setf (faslstate.faslval s) val))))
 
 (deffaslop $fasl-vlist (s)
   (%fasl-vlistX s nil))
