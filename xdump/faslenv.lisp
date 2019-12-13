@@ -43,6 +43,7 @@
 (defconstant $fasl-file-id1 #xff01)
 (defconstant $fasl-end #xFF) ;; Stop reading.
 (defconstant $fasl-buf-len 2048)
+(defconstant $fasl-epush-mask #x80)  ;Push value on etab if this bit is set in opcode.
 
 (defconstant $fasl-noop 0)              ;<nada:zilch>.
 (defconstant $fasl-s32-vector 1)        ;<count> Make a (SIMPLE-ARRAY (SIGNED-BYTE 32) <count>)
@@ -118,7 +119,5 @@
 ;;;  128 as #x00 #x81
 ;;; <nvstring> is a <count> (string length) followd by count <counts> of
 ;;;  variable-length charcode data.
-
-(defconstant $fasl-epush-mask #x80)  ;Push value on etab if this bit is set in opcode.
 
 (provide "FASLENV")
