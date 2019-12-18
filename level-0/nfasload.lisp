@@ -398,14 +398,6 @@
 (deffaslop $fasl-char (s)
   (%epushval s (code-char (%fasl-read-count s))))
 
-;;; Deprecated
-(deffaslop $fasl-fixnum (s)
-  (%epushval
-   s
-   (logior (the fixnum (ash (the fixnum (%word-to-int (%fasl-read-word s)))
-                            16))
-           (the fixnum (%fasl-read-word s))) ))
-
 (deffaslop $fasl-s32 (s)
   (%epushval s (%fasl-read-signed-long s)))
 

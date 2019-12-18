@@ -1231,15 +1231,6 @@
       (xload-read-utf-8-string s v o nchars nextra)
       str)))
 
-;;; Allegedly deprecated.
-(defxloadfaslop $fasl-fixnum (s)
-  (%epushval s (xload-integer
-                ;; This nonsense converts unsigned %fasl-read-long
-                ;; result to signed
-                (rlet ((long :long))
-                  (setf (%get-long long) (%fasl-read-long s))
-                  (%get-long long)))))
-
 (defxloadfaslop $fasl-word-fixnum (s)
   (%epushval s (xload-integer (%word-to-int (%fasl-read-word s)))))
 

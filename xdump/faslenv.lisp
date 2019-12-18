@@ -51,7 +51,6 @@
 (defconstant $fasl-clfun 3)             ;<size:count><codesize:count>code,size-codesize exprs
 (defconstant $fasl-lfuncall 4)          ;<lfun:expr> funcall the lfun.
 (defconstant $fasl-char 6)              ;<char:byte> Make a char
-(defconstant $fasl-fixnum 7)            ;<value:long> Make a (4-byte) fixnum
 (defconstant $fasl-dfloat 8)            ;<hi:long><lo:long> Make a DOUBLE-FLOAT
 (defconstant $fasl-bignum32 9)          ;<count> make a bignum with count digits
 (defconstant $fasl-word-fixnum 10)      ;<value:word> Make a fixnum
@@ -71,7 +70,6 @@
 (defconstant $fasl-vetab-alloc 24)      ;<count:count> Make a new expression table
                                         ; with count slots.  Current etab gets lost.
 (defconstant $fasl-veref 25)            ;<index:count> Get the value from an etab slot.
-(defconstant $fasl-fixnum8 26)          ;<high:long><low:long> Make an 8-byte fixnum.
 (defconstant $fasl-symfn 27)            ;<sym:expr> 
 (defconstant $fasl-eval 28)             ;<expr> Eval <expr> and return value.
 (defconstant $fasl-u16-vector 29)       ;<count> Make a (SIMPLE-ARRAY (UNSIGNED-BYTE 16) <count>)
