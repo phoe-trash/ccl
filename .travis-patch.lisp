@@ -3,6 +3,7 @@
 (setf *warn-if-redefine-kernel* nil)
 
 (load "ccl:lib;nfcomp.lisp")
+(load "ccl:level-0;nfasload.lisp")
 
 ;;; Check that something that's supposed to be a proper list of
 ;;; symbols is; error otherwise.

@@ -239,7 +239,7 @@
       (%epushval s sym))))
 
 
-(defun %fasl-vintern (s package &optional binding-index)
+(defun %fasl-intern (s package &optional binding-index)
   (multiple-value-bind (str len new-p) (%fasl-vreadstr s)
     (with-package-lock (package)
       (multiple-value-bind (symbol access internal-offset external-offset)
@@ -405,16 +405,16 @@
   (%epushval s (logior (ash (%fasl-read-signed-long s) 32)
                        (%fasl-read-long s))))
 
-(deffaslop $fasl-dfloat (s)
+(deffaslop $fasl-double-float (s)
   ;; A double-float is a 3-element "misc" object.
   ;; Element 0 is always 0 and exists solely to keep elements 1 and 2
   ;; aligned on a 64-bit boundary.
   (%epushval s (double-float-from-bits (%fasl-read-long s) (%fasl-read-long s))))
 
-(deffaslop $fasl-sfloat (s)
+(deffaslop $fasl-single-float (s)
   (%epushval s (host-single-float-from-unsigned-byte-32 (%fasl-read-long s))))
 
-(deffaslop $fasl-vstr (s)
+(deffaslop $fasl-str (s)
   (let* ((nchars (%fasl-read-count s))
          (nextra (%fasl-read-count s))
          (str (make-string (the fixnum nchars) :element-type 'base-char)))
@@ -423,28 +423,28 @@
 
 
 
-(deffaslop $fasl-word-fixnum (s)
+(deffaslop $fasl-fixnum (s)
   (%epushval s (%word-to-int (%fasl-read-word s))))
 
-(deffaslop $fasl-vmksym (s)
+(deffaslop $fasl-mksym (s)
   (%fasl-vmake-symbol s))
 
-(deffaslop $fasl-vmksym-special (s)
+(deffaslop $fasl-mksym-special (s)
   (%fasl-vmake-symbol s t))
 
-(deffaslop $fasl-vintern (s)
-  (%fasl-vintern s *package*))
+(deffaslop $fasl-intern (s)
+  (%fasl-intern s *package*))
 
-(deffaslop $fasl-vintern-special (s)
-  (%fasl-vintern s *package* t))
+(deffaslop $fasl-intern-special (s)
+  (%fasl-intern s *package* t))
 
-(deffaslop $fasl-vpkg-intern (s)
-  (%fasl-vintern s (%fasl-expr-preserve-epush s)))
+(deffaslop $fasl-pkg-intern (s)
+  (%fasl-intern s (%fasl-expr-preserve-epush s)))
 
-(deffaslop $fasl-vpkg-intern-special (s)
-  (%fasl-vintern s (%fasl-expr-preserve-epush s) t))
+(deffaslop $fasl-pkg-intern-special (s)
+  (%fasl-intern s (%fasl-expr-preserve-epush s) t))
 
-(deffaslop $fasl-vpkg (s)
+(deffaslop $fasl-pkg (s)
   (%fasl-vpackage s))
 
 (deffaslop $fasl-cons (s)
@@ -454,7 +454,7 @@
           (cdr cons) (%fasl-expr s))
     (setf (faslstate.faslval s) cons)))
 
-(defun %fasl-vlistX (s dotp)
+(defun %fasl-listX (s dotp)
   (let* ((len (%fasl-read-count s)))
     (declare (fixnum len))
     (let* ((val (%epushval s (cons nil nil)))
@@ -467,16 +467,16 @@
         (setf (cdr tail) (%fasl-expr s)))
       (setf (faslstate.faslval s) val))))
 
-(deffaslop $fasl-vlist (s)
-  (%fasl-vlistX s nil))
+(deffaslop $fasl-list (s)
+  (%fasl-listX s nil))
 
-(deffaslop $fasl-vlist* (s)
-  (%fasl-vlistX s t))
+(deffaslop $fasl-list* (s)
+  (%fasl-listX s t))
 
 (deffaslop $fasl-nil (s)
   (%epushval s nil))
 
-(deffaslop $fasl-timm (s)
+(deffaslop $fasl-immediate (s)
   (rlet ((p :int))
     (setf (%get-long p) (%fasl-read-long s))
     (%epushval s (%get-unboxed-ptr p))))
@@ -551,7 +551,7 @@
 (deffaslop $fasl-bit-vector (s)
   (fasl-read-ivector s target::subtag-bit-vector))
 
-(deffaslop $fasl-bignum32 (s)
+(deffaslop $fasl-bignum (s)
   (let* ((element-count (%fasl-read-count s))
          (size-in-bytes (* element-count 4))
          (num (%alloc-misc element-count target::subtag-bignum)))
@@ -631,10 +631,10 @@
 (deffaslop $fasl-istruct (s)
   (fasl-read-gvector s target::subtag-istruct))
 
-(deffaslop $fasl-vector-header (s)
+(deffaslop $fasl-vector (s)
   (fasl-read-gvector s target::subtag-vectorH))
 
-(deffaslop $fasl-array-header (s)
+(deffaslop $fasl-array (s)
   (fasl-read-gvector s target::subtag-arrayH))
 
 
@@ -642,7 +642,7 @@
   (%cant-epush s)
   (%defun (%fasl-expr s) (%fasl-expr s)))
 
-(deffaslop $fasl-macro (s)
+(deffaslop $fasl-defmacro (s)
   (%cant-epush s)
   (%macro (%fasl-expr s) (%fasl-expr s)))
 
@@ -693,9 +693,6 @@
 ;;; Bootstrapping version
 (defun provide (module-name)
   (push (string module-name) *modules*))
-
-(deffaslop $fasl-provide (s)
-  (provide (%fasl-expr s)))
 
 (deffaslop $fasl-istruct-cell (s)
   (%epushval s (register-istruct-cell (%fasl-expr-preserve-epush s))))

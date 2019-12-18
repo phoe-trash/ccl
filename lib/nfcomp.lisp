@@ -944,7 +944,7 @@ Will differ from *compiling-file* during an INCLUDE")
            (setq fn (fcomp-function-arg (cadr form) env)))
     (progn
       (setq doc (eval-constant doc))
-      (fcomp-output-form $fasl-macro env fn doc))
+      (fcomp-output-form $fasl-defmacro env fn doc))
     (fcomp-random-toplevel-form form env)))
 
 (defun define-compile-time-structure (sd refnames predicate env)
@@ -1589,7 +1589,7 @@ Will differ from *compiling-file* during an INCLUDE")
     ((signed-byte 16) (fasl-dump-s16 exp))
     ((signed-byte 32) (fasl-dump-s32 exp))
     ((signed-byte 64) (fasl-dump-s64 exp))
-    (bignum (fasl-dump-32-bit-ivector exp $fasl-bignum32))
+    (bignum (fasl-dump-32-bit-ivector exp $fasl-bignum))
     (character (fasl-dump-char exp))
     (list (fasl-dump-list exp))
     (immediate (fasl-dump-t_imm exp))
@@ -1640,8 +1640,8 @@ Will differ from *compiling-file* during an INCLUDE")
        (fasl-out-byte typecode)
        (fasl-out-count n)
        (fasl-out-ivect exp 0 nb)))
-    (vector (fasl-dump-gvector exp $fasl-vector-header))
-    (array (fasl-dump-gvector exp $fasl-array-header))
+    (vector (fasl-dump-gvector exp $fasl-vector))
+    (array (fasl-dump-gvector exp $fasl-array))
 
     (gvector
      (if (= (typecode exp) target::subtag-istruct)
@@ -1661,7 +1661,7 @@ Will differ from *compiling-file* during an INCLUDE")
 
 (defun fasl-dump-vstring (exp)
   (let* ((nextra (utf-8-extra-bytes exp)))
-    (fasl-out-opcode $fasl-vstr exp)
+    (fasl-out-opcode $fasl-str exp)
     (fasl-out-vstring exp nextra)))
 
 (defun fasl-dump-gvector (v op)
@@ -1848,7 +1848,7 @@ Will differ from *compiling-file* during an INCLUDE")
     (fasl-out-ivect c)))
 
 (defun fasl-dump-t_imm (imm)
-  (fasl-out-opcode $fasl-timm imm)
+  (fasl-out-opcode $fasl-immediate imm)
   (fasl-out-long (%address-of imm)))
 
 (defun fasl-dump-char (char)     ; << maybe not
@@ -1858,7 +1858,7 @@ Will differ from *compiling-file* during an INCLUDE")
 
 ;;; Always write big-endian.
 (defun fasl-dump-s16 (s16)
-  (fasl-out-opcode $fasl-word-fixnum s16)
+  (fasl-out-opcode $fasl-fixnum s16)
   (fasl-out-word s16))
 
 ;;; Always write big-endian
@@ -1878,20 +1878,20 @@ Will differ from *compiling-file* during an INCLUDE")
 
 
 (defun fasl-dump-dfloat (float)
-  (fasl-out-opcode $fasl-dfloat float)
+  (fasl-out-opcode $fasl-double-float float)
   (multiple-value-bind (high low) (double-float-bits float)
     (fasl-out-long high)
     (fasl-out-long low)))
 
 (defun fasl-dump-sfloat (float)
-  (fasl-out-opcode $fasl-sfloat float)
+  (fasl-out-opcode $fasl-single-float float)
   (fasl-out-long (single-float-bits float)))
 
 
 (defun fasl-dump-package (pkg)
   (let* ((name (package-name pkg))
          (nextra (utf-8-extra-bytes name)))
-    (fasl-out-opcode $fasl-vpkg pkg)
+    (fasl-out-opcode $fasl-pkg pkg)
     (fasl-out-vstring name nextra)))
 
 
@@ -1925,7 +1925,7 @@ Will differ from *compiling-file* during an INCLUDE")
   (if (eql 0 cdr-len)
     (fasl-out-opcode $fasl-cons cons)
     (progn
-      (fasl-out-opcode (if end $fasl-vlist* $fasl-vlist) cons)
+      (fasl-out-opcode (if end $fasl-list* $fasl-list) cons)
       (fasl-out-count cdr-len)))
   (dotimes (i (the fixnum (1+ cdr-len)))
     (fasl-dump-form (%car cons))
@@ -1947,21 +1947,21 @@ Will differ from *compiling-file* during an INCLUDE")
                     (unless (zerop i) i))))
         (cond ((null pkg)
                (progn
-                 (fasl-out-opcode (if idx $fasl-vmksym-special $fasl-vmksym) sym)
+                 (fasl-out-opcode (if idx $fasl-mksym-special $fasl-mksym) sym)
                  (fasl-out-vstring name nextra)))
               (*fasdump-epush*
                (progn
                  (fasl-out-byte (fasl-epush-op (if idx
-                                                 $fasl-vpkg-intern-special
-                                                 $fasl-vpkg-intern)))
+                                                 $fasl-pkg-intern-special
+                                                 $fasl-pkg-intern)))
                  (fasl-dump-form pkg)
                  (fasl-dump-epush sym)
                  (fasl-out-vstring name nextra)))
               (t
                (progn
                  (fasl-out-byte (if idx
-                                  $fasl-vpkg-intern-special
-                                  $fasl-vpkg-intern))
+                                  $fasl-pkg-intern-special
+                                  $fasl-pkg-intern))
                  (fasl-dump-form pkg)
                  (fasl-out-vstring name nextra))))))))
 
@@ -1975,10 +1975,6 @@ Will differ from *compiling-file* during an INCLUDE")
        ((= k end))
     (declare (fixnum k))
     (fasl-out-byte (char-code (schar str k)))))
-
-(defun fasl-out-nvstring (str)
-  (fasl-out-count (length str))
-  (fasl-out-simple-string str 0 (length str)))
 
 (defun utf-8-extra-bytes (string)
   (declare (simple-string string))

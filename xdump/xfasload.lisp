@@ -1170,10 +1170,10 @@
 
 
 
-(defxloadfaslop $fasl-dfloat (s)
+(defxloadfaslop $fasl-double-float (s)
   (%epushval s (xload-make-dfloat *xload-readonly-space* (%fasl-read-long s) (%fasl-read-long s))))
 
-(defxloadfaslop $fasl-sfloat (s)
+(defxloadfaslop $fasl-single-float (s)
   (%epushval s (xload-make-sfloat *xload-readonly-space* (%fasl-read-long s))))
 
 (defun xload-read-utf-8-string (s v o nchars nextra)
@@ -1223,7 +1223,7 @@
                  (char-code #\Replacement_Character))))))))
 
 
-(defxloadfaslop $fasl-vstr (s)
+(defxloadfaslop $fasl-str (s)
   (let* ((nchars (%fasl-read-count s))
          (nextra (%fasl-read-count s)))
     (multiple-value-bind (str v o) (xload-make-ivector *xload-readonly-space* :simple-string nchars)
@@ -1231,7 +1231,7 @@
       (xload-read-utf-8-string s v o nchars nextra)
       str)))
 
-(defxloadfaslop $fasl-word-fixnum (s)
+(defxloadfaslop $fasl-fixnum (s)
   (%epushval s (xload-integer (%word-to-int (%fasl-read-word s)))))
 
 (defxloadfaslop $fasl-s32 (s)
@@ -1269,13 +1269,13 @@
       (xload-ensure-binding-index sym))
     (%epushval s sym)))
 
-(defxloadfaslop $fasl-vmksym (s)
+(defxloadfaslop $fasl-mksym (s)
   (%xload-fasl-vmake-symbol s))
 
-(defxloadfaslop $fasl-vmksym-special (s)
+(defxloadfaslop $fasl-mksym-special (s)
   (%xload-fasl-vmake-symbol s t))
 
-(defun %xload-fasl-vintern (s package &optional idx)
+(defun %xload-fasl-intern (s package &optional idx)
   (multiple-value-bind (str len new-p) (%fasl-vreadstr s)
     (without-interrupts
       (multiple-value-bind (cursym access internal external) (%find-symbol str len package)
@@ -1289,21 +1289,21 @@
             (xload-ensure-binding-index symaddr))
           (%epushval s symaddr))))))
 
-(defxloadfaslop $fasl-vintern (s)
-  (%xload-fasl-vintern s *package*))
+(defxloadfaslop $fasl-intern (s)
+  (%xload-fasl-intern s *package*))
 
-(defxloadfaslop $fasl-vintern-special (s)
-  (%xload-fasl-vintern s *package* t))
+(defxloadfaslop $fasl-intern-special (s)
+  (%xload-fasl-intern s *package* t))
 
-(defxloadfaslop $fasl-vpkg-intern (s)
+(defxloadfaslop $fasl-pkg-intern (s)
   (let* ((addr (%fasl-expr-preserve-epush  s))
          (pkg (xload-addr->package addr)))
-    (%xload-fasl-vintern s pkg)))
+    (%xload-fasl-intern s pkg)))
 
-(defxloadfaslop $fasl-vpkg-intern-special (s)
+(defxloadfaslop $fasl-pkg-intern-special (s)
   (let* ((addr (%fasl-expr-preserve-epush  s))
          (pkg (xload-addr->package addr)))
-    (%xload-fasl-vintern s pkg t)))
+    (%xload-fasl-intern s pkg t)))
 
 (defun %xload-fasl-vpackage (s)
   (multiple-value-bind (str len new-p) (%fasl-vreadstr s)
@@ -1311,7 +1311,7 @@
       (%epushval s (xload-package->addr 
                     (or p (%kernel-restart $XNOPKG (if new-p str (%fasl-copystr str len)))))))))
 
-(defxloadfaslop $fasl-vpkg (s)
+(defxloadfaslop $fasl-pkg (s)
   (%xload-fasl-vpackage s))
 
 (defxloadfaslop $fasl-cons (s)
@@ -1321,7 +1321,7 @@
     (setf (faslstate.faslval s) cons)))
     
 
-(defun %xload-fasl-vlistX (s dotp)
+(defun %xload-fasl-listX (s dotp)
   (let* ((len (%fasl-read-count s)))
     (declare (fixnum len))
     (let* ((val (%epushval s (xload-make-cons *xload-target-nil* *xload-target-nil*)))
@@ -1333,16 +1333,16 @@
         (setf (xload-cdr tail) (%fasl-expr s)))
       (setf (faslstate.faslval s) val))))
 
-(defxloadfaslop $fasl-vlist (s)
-  (%xload-fasl-vlistX s nil))
+(defxloadfaslop $fasl-list (s)
+  (%xload-fasl-listX s nil))
 
-(defxloadfaslop $fasl-vlist* (s)
-  (%xload-fasl-vlistX s t))
+(defxloadfaslop $fasl-list* (s)
+  (%xload-fasl-listX s t))
 
 (defxloadfaslop $fasl-nil (s)
   (%epushval s *xload-target-nil*))
 
-(defxloadfaslop $fasl-timm (s)
+(defxloadfaslop $fasl-immediate (s)
   (let* ((val (%fasl-read-long s)))
     #+paranoid (unless (= (logand $typemask val) $t_imm) 
                  (error "Bug: expected immediate-tagged object, got ~s ." val))
@@ -1465,7 +1465,7 @@
 (defxloadfaslop $fasl-bit-vector (s)
   (xfasl-read-ivector s (xload-target-subtype :bit-vector)))
 
-(defxloadfaslop $fasl-bignum32 (s)
+(defxloadfaslop $fasl-bignum (s)
   (xfasl-read-ivector s (xload-target-subtype :bignum)))
 
 (defxloadfaslop $fasl-single-float-vector (s)
@@ -1519,10 +1519,10 @@
   (let* ((subtype (%fasl-read-byte s)))
     (xfasl-read-gvector s subtype)))
 
-(defxloadfaslop $fasl-vector-header (s)
+(defxloadfaslop $fasl-vector (s)
   (xfasl-read-gvector s (xload-target-subtype :vector-header)))
 
-(defxloadfaslop $fasl-array-header (s)
+(defxloadfaslop $fasl-array (s)
   (xfasl-read-gvector s (xload-target-subtype :array-header)))
 
 (defxloadfaslop $fasl-ratio (s)
@@ -1611,7 +1611,7 @@
       (xload-record-source-file sym 'function)
       (xload-fset sym fun))))
 
-(defxloadfaslop $fasl-macro (s)
+(defxloadfaslop $fasl-defmacro (s)
   (%cant-epush s)
   (let* ((fun (%fasl-expr s))
          (doc (%fasl-expr s)))
