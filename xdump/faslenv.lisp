@@ -14,7 +14,6 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-
 (in-package "CCL")
 
 ;; Compile-time environment for fasl dumper/loader.
@@ -37,25 +36,6 @@
   faslstate.faslgsymbols
   faslstate.fasldispatch)
 
-
-(defconstant $fasl-epush-bit 7)
-(defconstant $fasl-file-id #xff00)
-(defconstant $fasl-file-id1 #xff01)
-(defconstant $fasl-buf-len 2048)
-(defconstant $fasl-epush-mask #x80)  ;Push value on etab if this bit is set in opcode.
-
-;;; <count> is a variable-length encoding of an unsigned integer, written
-;;;  7 bits per octet, the least significant bits written first and the most
-;;;  significant octet having bit 7 set, so 127 would be written as #x00 and
-;;;  128 as #x00 #x81
-;;; <string> is a <count> (string length) followed by count octets of
-;;;  UTF-8 data.
-
-;; (defpackage "CCL-FASL"
-;;   (:use "COMMON-LISP"))
-
-;; (in-package "CCL-FASL")
-
 (defmacro define-fasl-operation (symbol number &optional docstring)
   (let ((name (format nil "$FASL-~A" (symbol-name symbol))))
     `(defconstant ,(intern name) ,number ,docstring)))
@@ -68,10 +48,7 @@
         for docstring = (format nil "~A~A" argstring description)
         for i from 0
         collect `(define-fasl-operation ,symbol ,i ,docstring) into result
-        finally (return `(progn
-                           ,@result
-                           (define-fasl-operation :end ,(length operations)
-                             "Stop reading the FASL.")))))
+        finally (return `(progn ,@result))))
 
 #+phoe (indent:define-indentation define-fasl-operations (&rest (&whole 2 &rest 2)))
 #+phoe (indent:define-indentation define-fasl-operation (&whole 2 4 4 &optional 2))
@@ -208,6 +185,31 @@
   (:src ((source expr))
     "Set *LOADING-FILE-SOURCE-FILE* to SOURCE.")
   (:toplevel-location ((location expr))
-    "Set *LOADING-TOPLEVEL-LOCATION* to LOCATION."))
+    "Set *LOADING-TOPLEVEL-LOCATION* to LOCATION.")
+  (:end ()
+    "Stop reading the FASL file."))
+
+;;; COUNT is a variable-length encoding of an unsigned integer, written
+;;; 7 bits per octet, the least significant bits written first and the most
+;;; significant octet having bit 7 set, so 127 would be written as #x00 and
+;;; 128 as #x00 #x81.
+;;; STRING is a COUNT (string length) followed by COUNT octets of UTF-8 data.
 
 (provide "FASLENV")
+
+(defpackage #:ccl-fasl
+  (:use #:common-lisp)
+  (:export #:+fasl-epush-bit+
+           #:+fasl-buffer-length+
+           #:+fasl-file-id+))
+
+(in-package #:ccl-fasl)
+
+(defconstant +fasl-epush-bit+ 7
+  "The FASL opcode bit that is true if the value should be pushed into etab.")
+
+(defconstant +fasl-buffer-length+ 2048
+  "Buffer size for reading FASL files.")
+
+(defconstant +fasl-file-id+ #xff00
+  "Magic number identifying the FASL file format.")

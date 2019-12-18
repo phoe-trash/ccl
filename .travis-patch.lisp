@@ -2,6 +2,7 @@
 
 (setf *warn-if-redefine-kernel* nil)
 
+(load "ccl:xdump;faslenv.lisp")
 (load "ccl:lib;nfcomp.lisp")
 (load "ccl:level-0;nfasload.lisp")
 

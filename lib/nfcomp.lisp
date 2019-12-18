@@ -34,7 +34,9 @@
 
 (require "FASLENV" "ccl:xdump;faslenv")
 
-(defmacro fasl-epush-op (op) `(%ilogior2 ,$fasl-epush-mask ,op))
+(defmacro fasl-epush-op (op)
+  (let ((mask (ash 1 ccl-fasl:+fasl-epush-bit+)))
+    `(%ilogior2 ,mask ,op)))
 
 #+ppc32-target
 (require "PPC32-ARCH")
@@ -1191,13 +1193,9 @@ Will differ from *compiling-file* during an INCLUDE")
 	  w)
       w)))
 
-
-              
 ;;;;          fasl-scan - dumping reference counting
 ;;;;
 ;;;;
-;These should be constants, but it's too much trouble when need to change 'em.
-(defparameter FASL-FILE-ID #xFF00)  ;Overall file format, shouldn't change much
 
 (defvar *fasdump-hash*)
 (defvar *fasdump-read-package*)
@@ -1493,7 +1491,7 @@ Will differ from *compiling-file* during an INCLUDE")
           (fasl-set-filepos 8)        ;Back to length longword
           (fasl-out-long (- pos 12))) ;Write length
         (fasl-set-filepos 0)          ;Seem to have won, make us legal
-        (fasl-out-word FASL-FILE-ID)
+        (fasl-out-word ccl-fasl:+fasl-file-id+)
         (setq finished? t)
         filename)
       (when (and opened? (not finished?))
@@ -2111,7 +2109,7 @@ Will differ from *compiling-file* during an INCLUDE")
 	  (unless (equal (pathname-type file) file-ext)
 	    (error "Not a ~A file: ~s" file-ext file))
 	  (with-open-file (instream file :element-type '(unsigned-byte 8))
-	    (unless (eql fasl-file-id (fasl-read-halfword instream))
+	    (unless (eql (fasl-read-halfword instream) ccl-fasl:+fasl-file-id+)
 	      (error "Bad ~A file ID in ~s" file-ext file))
 	    (incf count (fasl-read-halfword instream))))
 	(unwind-protect
@@ -2158,7 +2156,7 @@ Will differ from *compiling-file* during an INCLUDE")
 			   (incf data-address fasl-length))))))
 		 (stream-length outstream data-address)
 		 (file-position outstream 0)
-		 (fasl-write-halfword fasl-file-id outstream)
+           (fasl-write-halfword ccl-fasl:+fasl-file-id+ outstream)
 		 (setq finished? t)))
 	  (when (and created? (not finished?))
 	    (delete-file out-file))))
