@@ -1319,7 +1319,6 @@
     (setf (xload-car cons) (%fasl-expr s)
           (xload-cdr cons) (%fasl-expr s))
     (setf (faslstate.faslval s) cons)))
-    
 
 (defun %xload-fasl-listX (s dotp)
   (let* ((len (%fasl-read-count s)))
@@ -1343,11 +1342,7 @@
   (%epushval s *xload-target-nil*))
 
 (defxloadfaslop $fasl-immediate (s)
-  (let* ((val (%fasl-read-long s)))
-    #+paranoid (unless (= (logand $typemask val) $t_imm) 
-                 (error "Bug: expected immediate-tagged object, got ~s ." val))
-    (%epushval s val)))
-
+  (%epushval s (%fasl-read-long s)))
 
 (defxloadfaslop $fasl-platform (s)
   (%cant-epush s)
